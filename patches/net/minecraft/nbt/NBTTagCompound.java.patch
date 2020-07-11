@@ -59,7 +59,24 @@
          this.tagMap.put(key, value);
      }
  
-@@ -183,188 +184,77 @@
+@@ -106,12 +107,16 @@
+         this.tagMap.put(key, new NBTTagLong(value));
+     }
+ 
++    public void setUUID(String prefix, UUID uuid) { setUniqueId(prefix, uuid); } // Paper - OBFHELPER
++
+     public void setUniqueId(String key, UUID value)
+     {
+         this.setLong(key + "Most", value.getMostSignificantBits());
+         this.setLong(key + "Least", value.getLeastSignificantBits());
+     }
+ 
++    public UUID getUUID(String prefix) { return getUniqueId(prefix); } // Paper - OBFHELPER
++
+     @Nullable
+     public UUID getUniqueId(String key)
+     {
+@@ -183,188 +188,77 @@
          }
          else
          {
@@ -274,7 +291,7 @@
                  if (!nbttaglist.hasNoTags() && nbttaglist.getTagType() != type)
                  {
                      return new NBTTagList();
-@@ -372,15 +262,7 @@
+@@ -372,15 +266,7 @@
  
                  return nbttaglist;
              }
@@ -290,7 +307,7 @@
      public boolean getBoolean(String key)
      {
          return this.getByte(key) != 0;
-@@ -394,23 +276,13 @@
+@@ -394,23 +280,13 @@
      public String toString()
      {
          StringBuilder stringbuilder = new StringBuilder("{");
@@ -318,7 +335,7 @@
          }
  
          return stringbuilder.append('}').toString();
-@@ -446,10 +318,10 @@
+@@ -446,10 +322,10 @@
      public NBTTagCompound copy()
      {
          NBTTagCompound nbttagcompound = new NBTTagCompound();
@@ -332,7 +349,7 @@
          }
  
          return nbttagcompound;
-@@ -509,26 +381,30 @@
+@@ -509,26 +385,30 @@
  
      public void merge(NBTTagCompound other)
      {

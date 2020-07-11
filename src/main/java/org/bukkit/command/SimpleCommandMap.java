@@ -1,5 +1,6 @@
 package org.bukkit.command;
 
+import co.aikar.timings.Timing;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +30,7 @@ public class SimpleCommandMap implements CommandMap {
 
     private void setDefaultCommands() {
         register("bukkit", new PluginsCommand("plugins"));
-        register("bukkit", new TimingsCommand("timings"));
+        register("bukkit", new co.aikar.timings.TimingsCommand("timings")); // Spigot
         register("bukkit", new ReloadCommand("reload"));
     }
 
@@ -59,6 +60,7 @@ public class SimpleCommandMap implements CommandMap {
      * {@inheritDoc}
      */
     public boolean register(String label, String fallbackPrefix, Command command) {
+        command.timings = co.aikar.timings.TimingsManager.getCommandTiming(fallbackPrefix, command); // Spigot
         label = label.toLowerCase(java.util.Locale.ENGLISH).trim();
         fallbackPrefix = fallbackPrefix.toLowerCase(java.util.Locale.ENGLISH).trim();
         boolean registered = register(label, command, false, fallbackPrefix);
@@ -134,16 +136,22 @@ public class SimpleCommandMap implements CommandMap {
             return false;
         }
 
+        // Paper start - Plugins do weird things to workaround normal registration
+        if (target.timings == null) {
+            target.timings = co.aikar.timings.TimingsManager.getCommandTiming(null, target);
+        }
+        // Paper end
+
         try {
-            target.timings.startTiming(); // Spigot
-            // Note: we don't return the result of target.execute as thats success / failure, we return handled (true) or not handled (false)
-            target.execute(sender, sentCommandLabel, Arrays.copyOfRange(args, 1, args.length));
-            target.timings.stopTiming(); // Spigot
+            try (Timing ignored = target.timings.startTiming()) { // Paper - use try with resources
+                // Note: we don't return the result of target.execute as thats success / failure, we return handled (true) or not handled (false)
+                target.execute(sender, sentCommandLabel, Arrays.copyOfRange(args, 1, args.length));
+            }
         } catch (CommandException ex) {
-            target.timings.stopTiming(); // Spigot
+            //target.timings.stopTiming(); // Spigot // Paper
             throw ex;
         } catch (Throwable ex) {
-            target.timings.stopTiming(); // Spigot
+            //target.timings.stopTiming(); // Spigot // Paper
             throw new CommandException("Unhandled exception executing '" + commandLine + "' in " + target, ex);
         }
 

@@ -27,6 +27,7 @@ import org.magmafoundation.magma.remapper.utils.RemappingUtils;
  */
 public final class PluginClassLoader extends URLClassLoader {
 
+    public JavaPlugin getPlugin() { return plugin; } // Spigot
     final JavaPlugin plugin;
     private final JavaPluginLoader loader;
     private final Map<String, Class<?>> classes = new java.util.concurrent.ConcurrentHashMap<String, Class<?>>(); // Spigot

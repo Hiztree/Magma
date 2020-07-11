@@ -1,21 +1,20 @@
 package org.bukkit.craftbukkit.v1_12_R1.chunkio;
 
+import co.aikar.timings.Timing;
 import java.io.IOException;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import org.bukkit.craftbukkit.v1_12_R1.util.AsynchronousExecutor;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 class ChunkIOProvider implements AsynchronousExecutor.CallBackProvider<QueuedChunk, Chunk, Runnable, RuntimeException> {
     private final AtomicInteger threadNumber = new AtomicInteger(1);
 
     // async stuff
     public Chunk callStage1(QueuedChunk queuedChunk) throws RuntimeException {
-        try {
+        try (Timing ignored = queuedChunk.provider.world.timings.chunkIOStage1.startTimingIfSync()) { // Paper
             AnvilChunkLoader loader = queuedChunk.loader;
             Object[] data = loader.loadChunk__Async(queuedChunk.world, queuedChunk.x, queuedChunk.z);
             
@@ -38,16 +37,18 @@ class ChunkIOProvider implements AsynchronousExecutor.CallBackProvider<QueuedChu
             return;
         }
 
+        try (Timing ignored = queuedChunk.provider.world.timings.chunkIOStage2.startTimingIfSync()) { // Paper
         queuedChunk.loader.loadEntities(queuedChunk.world, queuedChunk.compound.getCompoundTag("Level"), chunk);
-        chunk.setLastSaveTime(queuedChunk.provider.world.getTotalWorldTime());
-        queuedChunk.provider.id2ChunkMap.put(ChunkPos.asLong(queuedChunk.x, queuedChunk.z), chunk);
-        chunk.onLoad();
+            chunk.setLastSaveTime(queuedChunk.provider.world.getTotalWorldTime());
+            queuedChunk.provider.id2ChunkMap.put(ChunkPos.asLong(queuedChunk.x, queuedChunk.z), chunk);
+            chunk.onLoad();
 
-        if (queuedChunk.provider.chunkGenerator != null) {
-            queuedChunk.provider.chunkGenerator.recreateStructures(chunk, queuedChunk.x, queuedChunk.z);
-        }
+            if (queuedChunk.provider.chunkGenerator != null) {
+                queuedChunk.provider.chunkGenerator.recreateStructures(chunk, queuedChunk.x, queuedChunk.z);
+            }
 
-        chunk.populateCB(queuedChunk.provider, queuedChunk.provider.chunkGenerator, false);
+            chunk.populateCB(queuedChunk.provider, queuedChunk.provider.chunkGenerator, false);
+        } // Paper
     }
 
     public void callStage3(QueuedChunk queuedChunk, Chunk chunk, Runnable runnable) throws RuntimeException {

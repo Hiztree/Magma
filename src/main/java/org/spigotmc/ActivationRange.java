@@ -1,5 +1,6 @@
 package org.spigotmc;
 
+import co.aikar.timings.MinecraftTimings;
 import net.minecraft.entity.*;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.effect.EntityWeatherEffect;
@@ -53,7 +54,8 @@ public class ActivationRange
     /**
      * These entities are excluded from Activation range checks.
      *
-     * @param entity
+     * @param entity Entity to initialize
+     * @param config Spigot config to determine ranges
      * @return boolean If it should always tick.
      */
     public static boolean initializeEntityActivationState(Entity entity, SpigotWorldConfig config)
@@ -91,7 +93,7 @@ public class ActivationRange
      */
     public static void activateEntities(World world)
     {
-        SpigotTimings.entityActivationCheckTimer.startTiming(); // Spigot
+        MinecraftTimings.entityActivationCheckTimer.startTiming();
         final int miscActivationRange = world.spigotConfig.miscActivationRange;
         final int animalActivationRange = world.spigotConfig.animalActivationRange;
         final int monsterActivationRange = world.spigotConfig.monsterActivationRange;
@@ -125,7 +127,7 @@ public class ActivationRange
                 }
             }
         }
-        SpigotTimings.entityActivationCheckTimer.stopTiming(); // Spigot
+        MinecraftTimings.entityActivationCheckTimer.stopTiming();
     }
 
     /**
@@ -242,11 +244,9 @@ public class ActivationRange
      */
     public static boolean checkIfActive(Entity entity)
     {
-        SpigotTimings.checkIfActiveTimer.startTiming(); // Spigot
         // Never safe to skip fireworks or entities not yet added to chunk
         // PAIL: inChunk - boolean under datawatchers
         if ( !entity.addedToChunk || entity instanceof EntityFireworkRocket ) {
-            SpigotTimings.checkIfActiveTimer.stopTiming(); // Spigot
             return true;
         }
 

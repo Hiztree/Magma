@@ -128,10 +128,10 @@ public class Main {
 
                 // Paper Start
                 acceptsAll(asList("paper", "paper-settings"), "File for paper settings")
-                        .withRequiredArg()
-                        .ofType(File.class)
-                        .defaultsTo(new File("paper.yml"))
-                        .describedAs("Yml file");
+                    .withRequiredArg()
+                    .ofType(File.class)
+                    .defaultsTo(new File("paper.yml"))
+                    .describedAs("Yml file");
                 // Paper end
 
                 // Magma Start
