@@ -16,7 +16,7 @@
  import net.minecraft.util.Mirror;
  import net.minecraft.util.ResourceLocation;
  import net.minecraft.util.Rotation;
-@@ -16,26 +19,54 @@
+@@ -16,26 +19,55 @@
  import net.minecraft.util.registry.RegistryNamespaced;
  import net.minecraft.util.text.ITextComponent;
  import net.minecraft.world.World;
@@ -26,6 +26,7 @@
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
 +import org.bukkit.inventory.InventoryHolder;
++import org.magmafoundation.magma.utils.KeyedObject;
  
 -public abstract class TileEntity implements net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>
 +public abstract class TileEntity implements net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>, KeyedObject // Paper
@@ -73,7 +74,7 @@
      @Nullable
      public static ResourceLocation getKey(Class <? extends TileEntity > clazz)
      {
-@@ -315,7 +346,7 @@
+@@ -315,7 +347,7 @@
       * @param net The NetworkManager the packet originated from
       * @param pkt The data packet
       */
@@ -82,7 +83,7 @@
      {
      }
  
-@@ -531,4 +562,12 @@
+@@ -531,4 +563,12 @@
          register("shulker_box", TileEntityShulkerBox.class);
          register("bed", TileEntityBed.class);
      }

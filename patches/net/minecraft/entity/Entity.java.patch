@@ -24,15 +24,7 @@
  import net.minecraft.entity.player.EntityPlayer;
  import net.minecraft.entity.player.EntityPlayerMP;
  import net.minecraft.init.Blocks;
-@@ -56,6 +58,7 @@
- import net.minecraft.util.EnumFacing;
- import net.minecraft.util.EnumHand;
- import net.minecraft.util.EnumParticleTypes;
-+import net.minecraft.util.KeyedObject;
- import net.minecraft.util.Mirror;
- import net.minecraft.util.ReportedException;
- import net.minecraft.util.ResourceLocation;
-@@ -77,26 +80,64 @@
+@@ -77,26 +79,65 @@
  import net.minecraft.util.text.event.HoverEvent;
  import net.minecraft.util.text.translation.I18n;
  import net.minecraft.world.Explosion;
@@ -66,6 +58,7 @@
 +import org.bukkit.event.vehicle.VehicleEnterEvent;
 +import org.bukkit.event.vehicle.VehicleExitEvent;
 +import org.bukkit.plugin.PluginManager;
++import org.magmafoundation.magma.utils.KeyedObject;
  
 -public abstract class Entity implements ICommandSender, net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>
 +public abstract class Entity implements ICommandSender, net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>, KeyedObject // Paper

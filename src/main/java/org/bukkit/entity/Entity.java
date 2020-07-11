@@ -501,6 +501,22 @@ public interface Entity extends Metadatable, CommandSender, Nameable {
 
     // paper start
     /**
+     * Gets the location where this entity originates from.
+     * <p>
+     * This value can be null if the entity hasn't yet been added to the world.
+     *
+     * @return Location where entity originates or null if not yet added
+     */
+    Location getOrigin();
+
+    /**
+     * Returns whether this entity was spawned from a mob spawner.
+     *
+     * @return True if entity spawned from a mob spawner
+     */
+    boolean fromMobSpawner();
+
+    /**
      * Gets the latest chunk an entity is currently or was in.
      *
      * @return The current, or most recent chunk if the entity is invalid (which may load the chunk)

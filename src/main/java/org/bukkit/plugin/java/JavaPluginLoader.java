@@ -301,16 +301,12 @@ public class JavaPluginLoader implements PluginLoader {
                 }
             }
 
-            EventExecutor executor = null;
-                    try {
-                executor = EventExecutor.create(method, eventClass);
-                        }
-            catch (Exception e2) {
-                executor = new TimedEventExecutor(executor,plugin, method, eventClass);
-                    }
-            // Spigot // Paper - Use factory method `EventExecutor.create()`
+
+            EventExecutor executor = new co.aikar.timings.TimedEventExecutor(EventExecutor.create(method, eventClass), plugin, method, eventClass); // Spigot // Paper - Use factory method `EventExecutor.create()`
+            if (false) { // Spigot - RL handles useTimings check now
                 eventSet.add(new RegisteredListener(listener, executor, eh.priority(), plugin, eh.ignoreCancelled()));
             }
+        }
         return ret;
     }
 
@@ -368,6 +364,10 @@ public class JavaPluginLoader implements PluginLoader {
                 jPlugin.setEnabled(false);
             } catch (Throwable ex) {
                 server.getLogger().log(Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex);
+                // Paper start - Disable plugins that fail to load
+                disablePlugin(jPlugin);
+                return;
+                // Paper end
             }
 
             if (cloader instanceof PluginClassLoader) {
