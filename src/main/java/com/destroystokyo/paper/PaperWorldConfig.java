@@ -241,4 +241,33 @@ public class PaperWorldConfig {
     private void nonPlayerEntitiesOnScoreboards() {
         nonPlayerEntitiesOnScoreboards = getBoolean("allow-non-player-entities-on-scoreboards", false);
     }
+
+    public boolean allowLeashingUndeadHorse = false;
+    private void allowLeashingUndeadHorse() {
+        allowLeashingUndeadHorse = getBoolean("allow-leashing-undead-horse", false);
+    }
+
+    public int nonPlayerArrowDespawnRate = -1;
+    private void nonPlayerArrowDespawnRate() {
+        nonPlayerArrowDespawnRate = getInt("non-player-arrow-despawn-rate", -1);
+        if (nonPlayerArrowDespawnRate == -1) {
+            nonPlayerArrowDespawnRate = spigotConfig.arrowDespawnRate;
+        }
+        log("Non Player Arrow Despawn Rate: " + nonPlayerArrowDespawnRate);
+    }
+
+    public double skeleHorseSpawnChance;
+    private void skeleHorseSpawnChance() {
+        skeleHorseSpawnChance = getDouble("skeleton-horse-thunder-spawn-chance", 0.01D); // -1.0D represents a "vanilla" state
+    }
+
+    public boolean firePhysicsEventForRedstone = false;
+    private void firePhysicsEventForRedstone() {
+        firePhysicsEventForRedstone = getBoolean("fire-physics-event-for-redstone", firePhysicsEventForRedstone);
+    }
+
+    public boolean useInhabitedTime = true;
+    private void useInhabitedTime() {
+        useInhabitedTime = getBoolean("use-chunk-inhabited-timer", true);
+    }
 }

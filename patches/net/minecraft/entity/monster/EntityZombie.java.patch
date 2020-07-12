@@ -28,15 +28,6 @@
          this.targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, EntityIronGolem.class, true));
      }
  
-@@ -140,7 +146,7 @@
-             {
-                 this.tasks.removeTask(this.breakDoor);
-             }
--        }
-+        }MOVEMENT_SPEED
-     }
- 
-     public boolean isChild()
 @@ -215,7 +221,13 @@
  
                  if (flag)

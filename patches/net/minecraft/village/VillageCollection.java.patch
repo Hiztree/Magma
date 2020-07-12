@@ -1,0 +1,11 @@
+--- ../src-base/minecraft/net/minecraft/village/VillageCollection.java
++++ ../src-work/minecraft/net/minecraft/village/VillageCollection.java
+@@ -275,7 +275,7 @@
+         for (int i = 0; i < nbttaglist.tagCount(); ++i)
+         {
+             NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
+-            Village village = new Village();
++            Village village = new Village(world); // Paper
+             village.readVillageDataFromNBT(nbttagcompound);
+             this.villageList.add(village);
+         }

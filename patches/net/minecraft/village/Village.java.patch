@@ -1,5 +1,14 @@
 --- ../src-base/minecraft/net/minecraft/village/Village.java
 +++ ../src-work/minecraft/net/minecraft/village/Village.java
+@@ -41,7 +41,7 @@
+     private final List<Village.VillageAggressor> villageAgressors = Lists.<Village.VillageAggressor>newArrayList();
+     private int numIronGolems;
+ 
+-    public Village()
++    private Village() // Paper - Nothing should call this - world needs to be set.
+     {
+         this.capabilities = net.minecraftforge.event.ForgeEventFactory.gatherCapabilities(this);
+     }
 @@ -83,7 +83,7 @@
              {
                  EntityIronGolem entityirongolem = new EntityIronGolem(this.world);

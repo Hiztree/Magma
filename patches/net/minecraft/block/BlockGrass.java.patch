@@ -12,16 +12,16 @@
  
  public class BlockGrass extends Block implements IGrowable
  {
-@@ -38,30 +43,58 @@
+@@ -38,30 +43,57 @@
      {
          if (!worldIn.isRemote)
          {
 +            int lightLevel = -1; // Paper
              if (!worldIn.isAreaLoaded(pos, 3)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light and spreading
 -            if (worldIn.getLightFromNeighbors(pos.up()) < 4 && worldIn.getBlockState(pos.up()).getLightOpacity(worldIn, pos.up()) > 2)
-+            if (worldIn.getBlockState(pos.up()).getLightOpacity(worldIn, pos.up()) > 2 && (lightLevel = worldIn.getLightFromNeighbors(pos.up())) < 4 )
-             {
+-            {
 -                worldIn.setBlockState(pos, Blocks.DIRT.getDefaultState());
++            if (worldIn.getBlockState(pos.up()).getLightOpacity(worldIn, pos.up()) > 2 && (lightLevel = worldIn.getLightFromNeighbors(pos.up())) < 4) { // Paper - move light check to end to avoid unneeded light lookups
 +                org.bukkit.World bworld = worldIn.getWorld();
 +                BlockState blockState = bworld.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getState();
 +                blockState.setType(CraftMagicNumbers.getMaterial(Blocks.DIRT));
@@ -78,7 +78,7 @@
                          }
                      }
                  }
-@@ -109,7 +142,8 @@
+@@ -109,7 +141,8 @@
  
                              if (Blocks.TALLGRASS.canBlockStay(worldIn, blockpos1, iblockstate1))
                              {

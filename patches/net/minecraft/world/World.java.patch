@@ -51,7 +51,7 @@
  import net.minecraft.pathfinding.PathWorldListener;
  import net.minecraft.profiler.Profiler;
  import net.minecraft.scoreboard.Scoreboard;
-@@ -46,24 +59,41 @@
+@@ -46,24 +59,43 @@
  import net.minecraft.util.SoundEvent;
  import net.minecraft.util.math.AxisAlignedBB;
  import net.minecraft.util.math.BlockPos;
@@ -75,9 +75,11 @@
  import net.minecraft.world.storage.loot.LootTableManager;
 +import net.minecraftforge.common.DimensionManager;
 +import net.minecraftforge.common.ForgeChunkManager.Ticket;
++import net.minecraftforge.common.util.BlockSnapshot;
  import net.minecraftforge.fml.relauncher.Side;
  import net.minecraftforge.fml.relauncher.SideOnly;
 +import org.bukkit.Bukkit;
++import org.bukkit.block.BlockState;
 +import org.bukkit.craftbukkit.v1_12_R1.CraftServer;
 +import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 +import org.bukkit.craftbukkit.v1_12_R1.event.CraftEventFactory;
@@ -93,7 +95,7 @@
  public abstract class World implements IBlockAccess, net.minecraftforge.common.capabilities.ICapabilityProvider
  {
      /**
-@@ -76,11 +106,11 @@
+@@ -76,11 +108,11 @@
      private int seaLevel = 63;
      protected boolean scheduledUpdatesAreImmediate;
      public final List<Entity> loadedEntityList = Lists.<Entity>newArrayList();
@@ -108,7 +110,7 @@
      public final List<EntityPlayer> playerEntities = Lists.<EntityPlayer>newArrayList();
      public final List<Entity> weatherEffects = Lists.<Entity>newArrayList();
      protected final IntHashMap<Entity> entitiesById = new IntHashMap<Entity>();
-@@ -94,36 +124,162 @@
+@@ -94,36 +126,168 @@
      public float thunderingStrength;
      private int lastLightningBolt;
      public final Random rand = new Random();
@@ -179,6 +181,12 @@
 +    public CraftServer getServer() {
 +        return (CraftServer) Bukkit.getServer();
 +    }
++
++    // Paper start
++    public Chunk getChunkIfLoaded(BlockPos blockposition) {
++        return ((ChunkProviderServer) this.chunkProvider).getChunkIfLoaded(blockposition.getX() >> 4, blockposition.getZ() >> 4);
++    }
++    // Paper end
 +
 +    public Chunk getChunkIfLoaded(int x, int z) {
 +        return ((ChunkProviderServer) this.chunkProvider).getChunkIfLoaded(x, z);
@@ -279,7 +287,7 @@
          this.eventListeners = Lists.newArrayList(this.pathListener);
          this.calendar = Calendar.getInstance();
          this.worldScoreboard = new Scoreboard();
-@@ -137,6 +293,12 @@
+@@ -137,6 +301,12 @@
          this.isRemote = client;
          this.worldBorder = providerIn.createWorldBorder();
          perWorldStorage = new MapStorage((ISaveHandler)null);
@@ -292,7 +300,25 @@
      }
  
      public World init()
-@@ -298,7 +460,7 @@
+@@ -215,14 +385,14 @@
+         return this.getBlockState(blockpos);
+     }
+ 
+-    public boolean isValid(BlockPos pos)
++    public boolean isValid(BlockPos pos) // Paper - unused but incase reflection / future uses
+     {
+-        return !this.isOutsideBuildHeight(pos) && pos.getX() >= -30000000 && pos.getZ() >= -30000000 && pos.getX() < 30000000 && pos.getZ() < 30000000;
++        return pos.isValidLocation(); // Paper
+     }
+ 
+     public boolean isOutsideBuildHeight(BlockPos pos)
+     {
+-        return pos.getY() < 0 || pos.getY() >= 256;
++        return pos.isInvalidYLocation(); // Paper
+     }
+ 
+     public boolean isAirBlock(BlockPos pos)
+@@ -298,7 +468,7 @@
          }
      }
  
@@ -301,10 +327,11 @@
  
      public Chunk getChunkFromBlockCoords(BlockPos pos)
      {
-@@ -317,6 +479,26 @@
+@@ -317,7 +487,27 @@
  
      public boolean setBlockState(BlockPos pos, IBlockState newState, int flags)
      {
+-        if (this.isOutsideBuildHeight(pos))
 +        // CraftBukkit start - tree generation
 +        if (this.captureTreeGeneration && Bukkit.isPrimaryThread()) {
 +            net.minecraftforge.common.util.BlockSnapshot blocksnapshot = null;
@@ -325,10 +352,11 @@
 +            return true;
 +        }
 +        // CraftBukkit end
-         if (this.isOutsideBuildHeight(pos))
++        if (pos.isInvalidYLocation())
          {
              return false;
-@@ -341,7 +523,9 @@
+         }
+@@ -341,7 +531,9 @@
              int oldOpacity = oldState.getLightOpacity(this, pos);
  
              IBlockState iblockstate = chunk.setBlockState(pos, newState);
@@ -338,7 +366,7 @@
              if (iblockstate == null)
              {
                  if (blockSnapshot != null) this.capturedBlockSnapshots.remove(blockSnapshot);
-@@ -352,7 +536,8 @@
+@@ -352,7 +544,8 @@
                  if (newState.getLightOpacity(this, pos) != oldOpacity || newState.getLightValue(this, pos) != oldLight)
                  {
                      this.profiler.startSection("checkLight");
@@ -348,7 +376,7 @@
                      this.profiler.endSection();
                  }
  
-@@ -437,6 +622,11 @@
+@@ -437,6 +630,11 @@
      {
          if (this.worldInfo.getTerrainType() != WorldType.DEBUG_ALL_BLOCK_STATES)
          {
@@ -360,13 +388,13 @@
              this.notifyNeighborsOfStateChange(pos, blockType, p_175722_3_);
          }
      }
-@@ -548,6 +738,17 @@
+@@ -548,6 +746,17 @@
  
              try
              {
 +                // CraftBukkit start
 +                CraftWorld world = ((WorldServer) this).getWorld();
-+                if (world != null) {
++                if (world != null && !((WorldServer)this).stopPhysicsEvent) { // Paper
 +                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(pos.getX(), pos.getY(), pos.getZ()), CraftMagicNumbers.getId(blockIn));
 +                    this.getServer().getPluginManager().callEvent(event);
 +
@@ -378,7 +406,7 @@
                  iblockstate.neighborChanged(this, pos, blockIn, fromPos);
              }
              catch (Throwable throwable)
-@@ -586,6 +787,11 @@
+@@ -586,6 +795,11 @@
                  {
                      iblockstate.getBlock().observedNeighborChange(iblockstate, this, pos, p_190529_2_, p_190529_3_);
                  }
@@ -390,7 +418,7 @@
                  catch (Throwable throwable)
                  {
                      CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Exception while updating neighbours");
-@@ -669,6 +875,41 @@
+@@ -669,6 +883,41 @@
          }
      }
  
@@ -432,25 +460,105 @@
      public int getLightFromNeighbors(BlockPos pos)
      {
          return this.getLight(pos, true);
-@@ -902,6 +1143,17 @@
+@@ -792,7 +1041,7 @@
+                 pos = new BlockPos(pos.getX(), 0, pos.getZ());
+             }
  
-     public IBlockState getBlockState(BlockPos pos)
+-            if (!this.isValid(pos))
++            if (!pos.isValidLocation()) // Paper
+             {
+                 return type.defaultLightValue;
+             }
+@@ -845,7 +1094,7 @@
+             pos = new BlockPos(pos.getX(), 0, pos.getZ());
+         }
+ 
+-        if (!this.isValid(pos))
++        if (!pos.isValidLocation()) // Paper
+         {
+             return type.defaultLightValue;
+         }
+@@ -862,7 +1111,7 @@
+ 
+     public void setLightFor(EnumSkyBlock type, BlockPos pos, int lightValue)
      {
-+		// CraftBukkit start - tree generation
-+        if (captureTreeGeneration)
-+		{
-+            for (net.minecraftforge.common.util.BlockSnapshot blocksnapshot : this.capturedBlockSnapshots)
-+            {
-+                if (blocksnapshot.getPos().equals(pos)) {
-+                    return blocksnapshot.getReplacedBlock();
-+				}
+-        if (this.isValid(pos))
++        if (pos.isValidLocation()) // Paper
+         {
+             if (this.isBlockLoaded(pos))
+             {
+@@ -900,18 +1149,62 @@
+         return this.provider.getLightBrightnessTable()[this.getLightFromNeighbors(pos)];
+     }
+ 
+-    public IBlockState getBlockState(BlockPos pos)
++    // Paper start - reduces need to do isLoaded before getType
++    public IBlockState getTypeIfLoaded(BlockPos blockposition) {
++        // CraftBukkit start - tree generation
++        final int x = blockposition.getX();
++        final int y = blockposition.getY();
++        final int z = blockposition.getZ();
++        if (captureTreeGeneration) {
++            final IBlockState previous = getCapturedBlockType(x, y, z);
++            if (previous != null) {
++                return previous;
 +            }
 +        }
 +        // CraftBukkit end
-         if (this.isOutsideBuildHeight(pos))
-         {
-             return Blocks.AIR.getDefaultState();
-@@ -1181,14 +1433,78 @@
++        Chunk chunk = ((ChunkProviderServer) this.chunkProvider).getChunkIfLoaded(x >> 4, z >> 4);
++        if (chunk != null) {
++            return chunk.getBlockState(x, y, z);
++        }
++        return null;
++    }
++    // Paper end
++
++    public IBlockState getBlockState(BlockPos blockposition)
+     {
+-        if (this.isOutsideBuildHeight(pos))
+-        {
+-            return Blocks.AIR.getDefaultState();
++		// CraftBukkit start - tree generation
++        // Paper start - optimize getType lookup to reduce instructions - getBlockData already enforces valid Y, move tree out
++        final int x = blockposition.getX();
++        final int y = blockposition.getY();
++        final int z = blockposition.getZ();
++        if (captureTreeGeneration)
++		{
++            final IBlockState previous = getCapturedBlockType(x, y, z);
++            if (previous != null) {
++                return previous;
++            }
+         }
+-        else
+-        {
+-            Chunk chunk = this.getChunkFromBlockCoords(pos);
+-            return chunk.getBlockState(pos);
++        // CraftBukkit end
++
++        return this.chunkProvider.getLoadedChunk(x >> 4, z >> 4).getBlockState(x, y, z);
++        // Paper end
++    }
++
++    // Paper start
++    private IBlockState getCapturedBlockType(int x, int y, int z) {
++        Iterator<BlockSnapshot> it = capturedBlockSnapshots.iterator();
++        while (it.hasNext()) {
++            BlockSnapshot previous = it.next();
++            BlockPos position = previous.getPos();
++            if (position.getX() == x && position.getY() == y && position.getZ() == z) {
++                int typeId = net.minecraft.block.Block.getIdFromBlock(previous.getReplacedBlock().getBlock());
++                int data = previous.getMeta();
++                return CraftMagicNumbers.getBlock(typeId).getStateFromMeta(data);
++            }
+         }
++        return null;
+     }
++    // Paper end
+ 
+     public boolean isDaytime()
+     {
+@@ -1181,14 +1474,78 @@
  
      public boolean spawnEntity(Entity entityIn)
      {
@@ -534,7 +642,7 @@
          {
              flag = true;
          }
-@@ -1199,18 +1515,19 @@
+@@ -1199,18 +1556,19 @@
          }
          else
          {
@@ -560,7 +668,7 @@
              return true;
          }
      }
-@@ -1222,6 +1539,8 @@
+@@ -1222,6 +1580,8 @@
              ((IWorldEventListener)this.eventListeners.get(i)).onEntityAdded(entityIn);
          }
          entityIn.onAddedToWorld();
@@ -569,7 +677,7 @@
      }
  
      public void onEntityRemoved(Entity entityIn)
-@@ -1231,6 +1550,8 @@
+@@ -1231,6 +1591,8 @@
              ((IWorldEventListener)this.eventListeners.get(i)).onEntityRemoved(entityIn);
          }
          entityIn.onRemovedFromWorld();
@@ -578,7 +686,7 @@
      }
  
      public void removeEntity(Entity entityIn)
-@@ -1274,7 +1595,16 @@
+@@ -1274,7 +1636,16 @@
              this.getChunkFromChunkCoords(i, j).removeEntity(entityIn);
          }
  
@@ -596,7 +704,7 @@
          this.onEntityRemoved(entityIn);
      }
  
-@@ -1677,7 +2007,11 @@
+@@ -1677,7 +2048,11 @@
          for (int i = 0; i < this.weatherEffects.size(); ++i)
          {
              Entity entity = this.weatherEffects.get(i);
@@ -609,7 +717,7 @@
              try
              {
                  if(entity.updateBlocked) continue;
-@@ -1704,7 +2038,7 @@
+@@ -1704,7 +2079,7 @@
                      removeEntity(entity);
                  }
                  else
@@ -618,7 +726,7 @@
              }
  
              if (entity.isDead)
-@@ -1714,36 +2048,49 @@
+@@ -1714,36 +2089,49 @@
          }
  
          this.profiler.endStartSection("remove");
@@ -683,7 +791,7 @@
                  if (!entity3.isDead && entity3.isPassenger(entity2))
                  {
                      continue;
-@@ -1758,12 +2105,15 @@
+@@ -1758,12 +2146,15 @@
              {
                  try
                  {
@@ -699,7 +807,7 @@
                      CrashReport crashreport1 = CrashReport.makeCrashReport(throwable1, "Ticking entity");
                      CrashReportCategory crashreportcategory1 = crashreport1.makeCategory("Entity being ticked");
                      entity2.addEntityCrashInfo(crashreportcategory1);
-@@ -1773,7 +2123,7 @@
+@@ -1773,7 +2164,7 @@
                          removeEntity(entity2);
                      }
                      else
@@ -708,7 +816,7 @@
                  }
              }
  
-@@ -1789,15 +2139,18 @@
+@@ -1789,15 +2180,18 @@
                  {
                      this.getChunkFromChunkCoords(l1, i2).removeEntity(entity2);
                  }
@@ -729,7 +837,7 @@
  
          this.processingLoadedTiles = true; //FML Move above remove to prevent CMEs
  
-@@ -1805,13 +2158,15 @@
+@@ -1805,13 +2199,15 @@
          {
              for (Object tile : tileEntitiesToBeRemoved)
              {
@@ -746,7 +854,7 @@
              this.loadedTileEntityList.removeAll(remove);
              this.tileEntitiesToBeRemoved.clear();
          }
-@@ -1834,25 +2189,28 @@
+@@ -1834,25 +2230,28 @@
                          {
                              return String.valueOf((Object)TileEntity.getKey(tileentity.getClass()));
                          });
@@ -782,7 +890,7 @@
                  }
              }
  
-@@ -1871,6 +2229,8 @@
+@@ -1871,6 +2270,8 @@
              }
          }
  
@@ -791,7 +899,7 @@
          this.processingLoadedTiles = false;
          this.profiler.endStartSection("pendingBlockEntities");
  
-@@ -1882,10 +2242,12 @@
+@@ -1882,10 +2283,12 @@
  
                  if (!tileentity1.isInvalid())
                  {
@@ -804,7 +912,7 @@
  
                      if (this.isBlockLoaded(tileentity1.getPos()))
                      {
-@@ -1893,6 +2255,12 @@
+@@ -1893,6 +2296,12 @@
                          IBlockState iblockstate = chunk.getBlockState(tileentity1.getPos());
                          chunk.addTileEntity(tileentity1.getPos(), tileentity1);
                          this.notifyBlockUpdate(tileentity1.getPos(), iblockstate, iblockstate, 3);
@@ -817,7 +925,7 @@
                      }
                  }
              }
-@@ -1900,6 +2268,8 @@
+@@ -1900,6 +2309,8 @@
              this.addedTileEntityList.clear();
          }
  
@@ -826,7 +934,7 @@
          this.profiler.endSection();
          this.profiler.endSection();
      }
-@@ -1976,6 +2346,14 @@
+@@ -1976,6 +2387,14 @@
              }
          }
  
@@ -841,7 +949,7 @@
          entityIn.lastTickPosX = entityIn.posX;
          entityIn.lastTickPosY = entityIn.posY;
          entityIn.lastTickPosZ = entityIn.posZ;
-@@ -1994,6 +2372,7 @@
+@@ -1994,6 +2413,7 @@
              {
                  if(!entityIn.updateBlocked)
                  entityIn.onUpdate();
@@ -849,7 +957,16 @@
              }
          }
  
-@@ -2418,7 +2797,7 @@
+@@ -2384,7 +2804,7 @@
+     @Nullable
+     public TileEntity getTileEntity(BlockPos pos)
+     {
+-        if (this.isOutsideBuildHeight(pos))
++        if (pos.isInvalidYLocation()) // Paper
+         {
+             return null;
+         }
+@@ -2418,7 +2838,7 @@
          {
              TileEntity tileentity2 = this.addedTileEntityList.get(j2);
  
@@ -858,7 +975,16 @@
              {
                  return tileentity2;
              }
-@@ -2454,6 +2833,7 @@
+@@ -2430,7 +2850,7 @@
+     public void setTileEntity(BlockPos pos, @Nullable TileEntity tileEntityIn)
+     {
+         pos = pos.toImmutable(); // Forge - prevent mutable BlockPos leaks
+-        if (!this.isOutsideBuildHeight(pos))
++        if (!pos.isInvalidYLocation()) // Paper
+         {
+             if (tileEntityIn != null && !tileEntityIn.isInvalid())
+             {
+@@ -2454,6 +2874,7 @@
                      }
  
                      toInvalidate.forEach(TileEntity::invalidate);
@@ -866,7 +992,16 @@
                      this.addedTileEntityList.add(tileEntityIn);
                  }
                  else
-@@ -2662,6 +3042,13 @@
+@@ -2504,7 +2925,7 @@
+ 
+     public boolean isBlockNormalCube(BlockPos pos, boolean _default)
+     {
+-        if (this.isOutsideBuildHeight(pos))
++        if (pos.isInvalidYLocation()) // Paper
+         {
+             return false;
+         }
+@@ -2662,6 +3083,13 @@
                  }
  
                  this.rainingStrength = MathHelper.clamp(this.rainingStrength, 0.0F, 1.0F);
@@ -880,7 +1015,7 @@
              }
          }
      }
-@@ -2849,10 +3236,11 @@
+@@ -2849,10 +3277,11 @@
          }
      }
  
@@ -896,7 +1031,7 @@
              return false;
          }
          else
-@@ -3142,7 +3530,16 @@
+@@ -3142,7 +3571,16 @@
  
          for (Entity entity4 : this.loadedEntityList)
          {
@@ -914,7 +1049,7 @@
              {
                  ++j2;
              }
-@@ -3157,6 +3554,9 @@
+@@ -3157,6 +3595,9 @@
          {
              if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityJoinWorldEvent(entity4, this)))
              {
@@ -924,7 +1059,7 @@
                  loadedEntityList.add(entity4);
                  this.onEntityAdded(entity4);
              }
-@@ -3173,19 +3573,26 @@
+@@ -3173,19 +3614,26 @@
          IBlockState iblockstate1 = this.getBlockState(pos);
          AxisAlignedBB axisalignedbb = skipCollisionCheck ? null : blockIn.getDefaultState().getCollisionBoundingBox(this, pos);
  
@@ -954,7 +1089,7 @@
      }
  
      public int getSeaLevel()
-@@ -3350,6 +3757,12 @@
+@@ -3350,6 +3798,12 @@
          {
              EntityPlayer entityplayer1 = this.playerEntities.get(j2);
  
@@ -967,7 +1102,7 @@
              if (p_190525_9_.apply(entityplayer1))
              {
                  double d1 = entityplayer1.getDistanceSq(x, y, z);
-@@ -3371,7 +3784,7 @@
+@@ -3371,7 +3825,7 @@
          {
              EntityPlayer entityplayer = this.playerEntities.get(j2);
  
@@ -976,7 +1111,7 @@
              {
                  double d0 = entityplayer.getDistanceSq(x, y, z);
  
-@@ -3595,8 +4008,19 @@
+@@ -3595,8 +4049,19 @@
  
      public void updateAllPlayersSleepingFlag()
      {
@@ -996,7 +1131,7 @@
      public float getThunderStrength(float delta)
      {
          return (this.prevThunderingStrength + (this.thunderingStrength - this.prevThunderingStrength) * delta) * this.getRainStrength(delta);
-@@ -3885,7 +4309,7 @@
+@@ -3885,7 +4350,7 @@
          int j2 = x * 16 + 8 - blockpos1.getX();
          int k2 = z * 16 + 8 - blockpos1.getZ();
          int l2 = 128;

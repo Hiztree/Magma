@@ -8,10 +8,11 @@
  import net.minecraft.entity.monster.EntityEnderman;
  import net.minecraft.entity.player.EntityPlayer;
  import net.minecraft.entity.player.EntityPlayerMP;
-@@ -36,6 +37,12 @@
+@@ -36,6 +37,13 @@
  import net.minecraft.world.World;
  import net.minecraftforge.fml.relauncher.Side;
  import net.minecraftforge.fml.relauncher.SideOnly;
++import org.bukkit.entity.Arrow.PickupStatus;
 +import org.bukkit.entity.LivingEntity;
 +import org.bukkit.event.entity.EntityCombustByEntityEvent;
 +import org.bukkit.event.entity.EntityCombustEvent;
@@ -21,7 +22,7 @@
  
  public abstract class EntityArrow extends Entity implements IProjectile
  {
-@@ -47,21 +54,33 @@
+@@ -47,21 +55,33 @@
          }
      });
      private static final DataParameter<Byte> CRITICAL = EntityDataManager.<Byte>createKey(EntityArrow.class, DataSerializers.BYTE);
@@ -61,7 +62,7 @@
      public EntityArrow(World worldIn)
      {
          super(worldIn);
-@@ -83,6 +102,7 @@
+@@ -83,6 +103,7 @@
      {
          this(worldIn, shooter.posX, shooter.posY + (double)shooter.getEyeHeight() - 0.10000000149011612D, shooter.posZ);
          this.shootingEntity = shooter;
@@ -69,15 +70,16 @@
  
          if (shooter instanceof EntityPlayer)
          {
-@@ -222,7 +242,7 @@
+@@ -222,8 +243,7 @@
              {
                  ++this.ticksInGround;
  
 -                if (this.ticksInGround >= 1200)
-+                if (this.ticksInGround >= world.spigotConfig.arrowDespawnRate) // Spigot - First int after shooter
-                 {
+-                {
++                if (this.ticksInGround >= (pickupStatus != PickupStatus.DISALLOWED ? world.spigotConfig.arrowDespawnRate : world.paperConfig.nonPlayerArrowDespawnRate)) { // Spigot - First int after shooter // Paper
                      this.setDead();
                  }
+             }
 @@ -339,7 +359,7 @@
      protected void onHit(RayTraceResult raytraceResultIn)
      {

@@ -199,15 +199,16 @@
                  }
              }
  
-@@ -296,6 +319,7 @@
+@@ -295,7 +318,7 @@
+         }
          catch (IOException ioexception)
          {
-             ioexception.printStackTrace();
-+            ServerInternalException.reportInternalException(ioexception); // Paper
+-            ioexception.printStackTrace();
++            org.spigotmc.SneakyThrow.sneaky(ioexception); // Paper - we want the upper try/catch to retry this
          }
      }
  
-@@ -344,6 +368,159 @@
+@@ -344,6 +367,159 @@
          }
      }
  
@@ -367,7 +368,7 @@
      class ChunkBuffer extends ByteArrayOutputStream
      {
          private final int chunkX;
-@@ -358,7 +535,34 @@
+@@ -358,7 +534,34 @@
  
          public void close() throws IOException
          {

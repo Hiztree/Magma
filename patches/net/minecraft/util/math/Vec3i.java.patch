@@ -9,7 +9,7 @@
      private final int y;
      private final int z;
  
-+    public final boolean isValidLocation() {
++    public boolean isValidLocation() {
 +        return x >= -30000000 && z >= -30000000 && x < 30000000 && z < 30000000 && y >= 0 && y < 256;
 +    }
 +    public boolean isInvalidYLocation() {

@@ -203,4 +203,15 @@ public class PaperConfig {
         minChunkLoadThreads = Math.min(6, getInt("settings.min-chunk-load-threads", 2)); // Keep people from doing stupid things with max of 6
     }
 
+    public static boolean enableFileIOThreadSleep;
+    private static void enableFileIOThreadSleep() {
+        enableFileIOThreadSleep = getBoolean("settings.sleep-between-chunk-saves", false);
+        if (enableFileIOThreadSleep) Bukkit.getLogger().info("Enabled sleeping between chunk saves, beware of memory issues");
+    }
+
+    public static boolean loadPermsBeforePlugins = true;
+    private static void loadPermsBeforePlugins() {
+        loadPermsBeforePlugins = getBoolean("settings.load-permissions-yml-before-plugins", true);
+    }
+
 }

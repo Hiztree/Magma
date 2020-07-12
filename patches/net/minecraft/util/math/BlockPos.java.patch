@@ -1,0 +1,19 @@
+--- ../src-base/minecraft/net/minecraft/util/math/BlockPos.java
++++ ../src-work/minecraft/net/minecraft/util/math/BlockPos.java
+@@ -294,6 +294,16 @@
+             protected int x;
+             protected int y;
+             protected int z;
++            // Paper start
++            @Override
++            public boolean isValidLocation() {
++                return x >= -30000000 && z >= -30000000 && x < 30000000 && x < 30000000 && y >= 0 && y < 256;
++            }
++            @Override
++            public boolean isInvalidYLocation() {
++                return y < 0 || y >= 256;
++            }
++            // Paper end
+ 
+             public MutableBlockPos()
+             {
