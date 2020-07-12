@@ -383,4 +383,15 @@ public class PaperWorldConfig {
         removeCorruptTEs = getBoolean("remove-corrupt-tile-entities", false);
     }
 
+    public int shieldBlockingDelay = 5;
+    private void shieldBlockingDelay() {
+        shieldBlockingDelay = getInt("game-mechanics.shield-blocking-delay", 5);
+    }
+
+    public boolean armorStandTick = true;
+    private void armorStandTick() {
+        this.armorStandTick = this.getBoolean("armor-stands-tick", this.armorStandTick);
+        log("ArmorStand ticking is " + (this.armorStandTick ? "enabled" : "disabled") + " by default");
+    }
+
 }

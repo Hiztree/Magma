@@ -390,6 +390,12 @@ public class CraftBlock implements Block {
         }
     }
 
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public BlockState getState(boolean useSnapshot) {
+        return null;
+    }
+
     public Biome getBiome() {
         return getWorld().getBiome(x, z);
     }

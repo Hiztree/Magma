@@ -9,7 +9,7 @@
  import net.minecraft.block.state.IBlockState;
  import net.minecraft.client.util.ITooltipFlag;
  import net.minecraft.enchantment.Enchantment;
-@@ -49,14 +49,17 @@
+@@ -49,17 +49,20 @@
  import net.minecraft.world.World;
  import net.minecraftforge.fml.relauncher.Side;
  import net.minecraftforge.fml.relauncher.SideOnly;
@@ -28,7 +28,11 @@
 +    public Item item;
      private NBTTagCompound stackTagCompound;
      private boolean isEmpty;
-     int itemDamage;
+-    int itemDamage;
++    int itemDamage; public void setDamage(int i) { this.itemDamage = i; } // Paper - OBFHELPER
+     private EntityItemFrame itemFrame;
+     private Block canDestroyCacheBlock;
+     private boolean canDestroyCacheResult;
 @@ -70,6 +73,22 @@
      private net.minecraftforge.common.capabilities.CapabilityDispatcher capabilities;
      private NBTTagCompound capNBT;
@@ -125,7 +129,21 @@
          }
  
          if (this.capabilities != null)
-@@ -291,6 +321,26 @@
+@@ -274,11 +304,13 @@
+         return this.getItem().getHasSubtypes();
+     }
+ 
++    public boolean hasDamage() { return isItemDamaged(); } // Paper OBFHELPER
+     public boolean isItemDamaged()
+     {
+         return this.isItemStackDamageable() && getItem().isDamaged(this);
+     }
+ 
++    public int getDamage() { return getItemDamage(); } // Paper OBFHELPER
+     public int getItemDamage()
+     {
+         return getItem().getDamage(this);
+@@ -291,6 +323,26 @@
  
      public void setItemDamage(int meta)
      {
@@ -152,7 +170,7 @@
          getItem().setDamage(this, meta);
      }
  
-@@ -322,6 +372,19 @@
+@@ -322,6 +374,19 @@
  
                  amount -= j;
  
@@ -172,7 +190,7 @@
                  if (amount <= 0)
                  {
                      return false;
-@@ -347,6 +410,11 @@
+@@ -347,6 +412,11 @@
                  if (this.attemptDamageItem(amount, entityIn.getRNG(), entityIn instanceof EntityPlayerMP ? (EntityPlayerMP)entityIn : null))
                  {
                      entityIn.renderBrokenItemStack(this);
@@ -184,7 +202,7 @@
                      this.shrink(1);
  
                      if (entityIn instanceof EntityPlayer)
-@@ -592,9 +660,22 @@
+@@ -592,9 +662,22 @@
          return this.stackTagCompound != null ? this.stackTagCompound.getTagList("ench", 10) : new NBTTagList();
      }
  
@@ -207,7 +225,7 @@
      }
  
      public String getDisplayName()
-@@ -931,6 +1012,7 @@
+@@ -931,6 +1014,7 @@
          nbttagcompound.setShort("id", (short)Enchantment.getEnchantmentID(ench));
          nbttagcompound.setShort("lvl", (short)((byte)level));
          nbttaglist.appendTag(nbttagcompound);
@@ -215,7 +233,7 @@
      }
  
      public boolean isItemEnchanted()
-@@ -983,6 +1065,14 @@
+@@ -983,6 +1067,14 @@
  
      public void setRepairCost(int cost)
      {
@@ -230,7 +248,7 @@
          if (!this.hasTagCompound())
          {
              this.stackTagCompound = new NBTTagCompound();
-@@ -1043,6 +1133,14 @@
+@@ -1043,6 +1135,14 @@
          nbttaglist.appendTag(nbttagcompound);
      }
  
@@ -245,7 +263,7 @@
      public ITextComponent getTextComponent()
      {
          TextComponentString textcomponentstring = new TextComponentString(this.getDisplayName());
-@@ -1280,4 +1378,16 @@
+@@ -1280,4 +1380,16 @@
      {
          return this.isEmpty() || this.getItem().doesSneakBypassUse(this, world, pos, player);
      }

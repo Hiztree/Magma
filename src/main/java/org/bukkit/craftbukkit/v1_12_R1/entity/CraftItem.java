@@ -36,6 +36,17 @@ public class CraftItem extends CraftEntity implements Item {
         item.pickupDelay = Math.min(delay, Short.MAX_VALUE);
     }
 
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public boolean canMobPickup() {
+        return false;
+    }
+
+    @Override
+    public void setCanMobPickup(boolean canMobPickup) {
+
+    }
+
     @Override
     public String toString() {
         return "CraftItem";

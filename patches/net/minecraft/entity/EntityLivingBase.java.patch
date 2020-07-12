@@ -1141,7 +1141,7 @@
  
              if (itemstack == this.activeItemStack)
              {
-@@ -2784,12 +3138,40 @@
+@@ -2784,25 +3138,56 @@
      {
          if (!this.activeItemStack.isEmpty() && this.isHandActive())
          {
@@ -1184,7 +1184,32 @@
          }
      }
  
-@@ -2897,12 +3279,17 @@
++    public ItemStack getActiveItem() { return getActiveItemStack(); } // Paper - OBFHELPER
+     public ItemStack getActiveItemStack()
+     {
+         return this.activeItemStack;
+     }
+ 
++    public int getItemUseRemainingTime() { return getItemInUseCount(); } // Paper - OBFHELPER
+     public int getItemInUseCount()
+     {
+         return this.activeItemStackUseCount;
+     }
+ 
++    public int getHandRaisedTime() { return getItemInUseMaxCount(); } // Paper - OBFHELPER
+     public int getItemInUseMaxCount()
+     {
+         return this.isHandActive() ? this.activeItemStack.getMaxItemUseDuration() - this.getItemInUseCount() : 0;
+@@ -2842,7 +3227,7 @@
+             }
+             else
+             {
+-                return item.getMaxItemUseDuration(this.activeItemStack) - this.activeItemStackUseCount >= 5;
++                return item.getMaxItemUseDuration(this.activeItemStack) - this.activeItemStackUseCount >= getShieldBlockingDelay(); // Paper - shieldBlockingDelay
+             }
+         }
+         else
+@@ -2897,12 +3282,17 @@
  
              if (flag1)
              {
@@ -1207,7 +1232,7 @@
              }
          }
  
-@@ -2936,6 +3323,11 @@
+@@ -2936,6 +3326,11 @@
          }
      }
  
@@ -1219,7 +1244,7 @@
      public boolean canBeHitWithPotion()
      {
          return true;
-@@ -2949,7 +3341,7 @@
+@@ -2949,7 +3344,7 @@
      @SuppressWarnings("unchecked")
      @Override
      @Nullable
@@ -1228,7 +1253,7 @@
      {
          if (capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
          {
-@@ -2961,7 +3353,7 @@
+@@ -2961,7 +3356,7 @@
      }
  
      @Override
@@ -1237,3 +1262,18 @@
      {
          return capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
      }
+@@ -3001,4 +3396,14 @@
+             this.motionZ += (double)(forward * f2 + strafe * f1);
+         }
+     }
++
++    // Paper start
++    public int shieldBlockingDelay = world.paperConfig.shieldBlockingDelay;
++    public int getShieldBlockingDelay() {
++        return shieldBlockingDelay;
++    }
++    public void setShieldBlockingDelay(int shieldBlockingDelay) {
++        this.shieldBlockingDelay = shieldBlockingDelay;
++    }
++    // Paper end
+ }

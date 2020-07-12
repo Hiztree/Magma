@@ -20,7 +20,7 @@ public interface HopperPusher {
             for (int y = startY; y <= endY; y++) {
                 for (int z = startZ; z <= endZ; z++) {
                     adjacentPos.setValues(x, y, z);
-                    TileEntityHopper hopper = MCUtil.getHopper(getEntityWorld(), adjacentPos);
+                    TileEntityHopper hopper = MCUtil.getHopper(getWorld(), adjacentPos);
                     if (hopper == null) {
                         continue; // Avoid playing with the bounding boxes, if at all possible
                     }
@@ -44,7 +44,7 @@ public interface HopperPusher {
     boolean acceptItem(TileEntityHopper hopper);
 
     default boolean tryPutInHopper() {
-        if (!getEntityWorld().paperConfig.isHopperPushBased) {
+        if (!getWorld().paperConfig.isHopperPushBased) {
             return false;
         }
         TileEntityHopper hopper = findHopper();
@@ -53,7 +53,7 @@ public interface HopperPusher {
 
     AxisAlignedBB getEntityBoundingBox();
 
-    World getEntityWorld();
+    World getWorld();
 
     double getX();
 

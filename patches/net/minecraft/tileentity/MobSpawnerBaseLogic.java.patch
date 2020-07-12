@@ -129,13 +129,14 @@
                      Entity entity = AnvilChunkLoader.readWorldEntityPos(nbttagcompound, world, d0, d1, d2, false);
  
                      if (entity == null)
-@@ -132,7 +155,15 @@
+@@ -131,8 +154,16 @@
+                             if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(entityliving, this.getSpawnerWorld(), (float)entity.posX, (float)entity.posY, (float)entity.posZ, this))
                              ((EntityLiving)entity).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(entity)), (IEntityLivingData)null);
                          }
++                        entity.spawnedViaMobSpawner = true; // Paper
++                        if (entity.world.spigotConfig.nerfSpawnerMobs) entity.fromMobSpawner = true; // Spigot Start
  
 -                        AnvilChunkLoader.spawnEntity(entity, world);
-+						            if (entity.world.spigotConfig.nerfSpawnerMobs) entity.fromMobSpawner = true; // Spigot Start
-+
 +                        flag = true; // Paper
 +
 +                        if (CraftEventFactory.callSpawnerSpawnEvent(entity, blockpos).isCancelled()) {

@@ -103,6 +103,7 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.8.1'
     compile 'org.reflections:reflections:0.9.10'
     compile 'javassist:javassist:3.12.1.GA'
+    compile 'org.slf4j:slf4j-api:1.7.25'
 }
 
 jar{

@@ -1962,5 +1962,11 @@ public final class CraftServer implements Server {
         DefaultPermissions.registerCorePermissions();
         CraftDefaultPermissions.registerCorePermissions();
     }
+
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public boolean reloadCommandAliases() {
+        return false;
+    }
     // Paper end
 }

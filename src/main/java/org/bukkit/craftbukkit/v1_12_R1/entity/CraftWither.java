@@ -2,6 +2,7 @@ package org.bukkit.craftbukkit.v1_12_R1.entity;
 
 import net.minecraft.entity.boss.EntityWither;
 import org.bukkit.craftbukkit.v1_12_R1.CraftServer;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.EntityType;
 
@@ -22,5 +23,16 @@ public class CraftWither extends CraftMonster implements Wither {
 
     public EntityType getType() {
         return EntityType.WITHER;
+    }
+
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public void rangedAttack(LivingEntity target, float charge) {
+
+    }
+
+    @Override
+    public void setChargingAttack(boolean raiseHands) {
+
     }
 }

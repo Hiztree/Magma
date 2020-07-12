@@ -546,15 +546,45 @@
      }
  
      private void spawnShoulderEntity(@Nullable NBTTagCompound p_192026_1_)
-@@ -2247,6 +2426,23 @@
+@@ -2247,6 +2426,55 @@
          }
      }
  
-+    private boolean spawnShoulderEntity_CB(@Nullable NBTTagCompound p_192026_1_) // CraftBukkit void->boolean
++    // Paper start
++    public Entity releaseLeftShoulderEntity() {
++        Entity entity = this.spawnEntityFromShoulder0(this.getLeftShoulderEntity());
++        if (entity != null) {
++            this.setLeftShoulderEntity(new NBTTagCompound());
++        }
++        return entity;
++    }
++
++    public Entity releaseRightShoulderEntity() {
++        Entity entity = this.spawnEntityFromShoulder0(this.getRightShoulderEntity());
++        if (entity != null) {
++            this.setRightShoulderEntity(new NBTTagCompound());
++        }
++        return entity;
++    }
++
++    // Paper - incase any plugins used NMS to call this... old method signature to avoid other diff
++    private boolean spawnShoulderEntity_CB(@Nullable NBTTagCompound nbttagcompound) {
++        return spawnEntityFromShoulder0(nbttagcompound) != null;
++    }
++
++    // Paper - Moved to new method that now returns entity, and properly null checks
++    private Entity spawnEntityFromShoulder(@Nullable NBTTagCompound nbttagcompound) { // CraftBukkit void->boolean - Paper - return Entity
++        return spawnEntityFromShoulder0(nbttagcompound);
++    }
++
++    private Entity spawnEntityFromShoulder0(@Nullable NBTTagCompound p_192026_1_) // CraftBukkit void->boolean - paper return entity
 +    {
 +        if (!this.world.isRemote && !p_192026_1_.hasNoTags())
 +        {
 +            Entity entity = EntityList.createEntityFromNBT(p_192026_1_, this.world);
++            if (entity == null) { // Paper - null check
++                return null;
++            }
 +
 +            if (entity instanceof EntityTameable)
 +            {
@@ -562,15 +592,17 @@
 +            }
 +
 +            entity.setPosition(this.posX, this.posY + 0.699999988079071D, this.posZ);
-+            return this.world.spawnEntity(entity, CreatureSpawnEvent.SpawnReason.SHOULDER_ENTITY);
++            if (this.world.addEntity(entity, CreatureSpawnEvent.SpawnReason.SHOULDER_ENTITY)) { // CraftBukkit
++                return entity;
++            }
 +        }
-+        return true;
++        return null;
 +    }
 +
      @SideOnly(Side.CLIENT)
      public boolean isInvisibleToPlayer(EntityPlayer player)
      {
-@@ -2481,7 +2677,7 @@
+@@ -2481,7 +2709,7 @@
          return (NBTTagCompound)this.dataManager.get(LEFT_SHOULDER_ENTITY);
      }
  
@@ -579,7 +611,7 @@
      {
          this.dataManager.set(LEFT_SHOULDER_ENTITY, tag);
      }
-@@ -2491,7 +2687,7 @@
+@@ -2491,7 +2719,7 @@
          return (NBTTagCompound)this.dataManager.get(RIGHT_SHOULDER_ENTITY);
      }
  
@@ -588,7 +620,7 @@
      {
          this.dataManager.set(RIGHT_SHOULDER_ENTITY, tag);
      }
-@@ -2531,7 +2727,7 @@
+@@ -2531,7 +2759,7 @@
  
      public boolean canUseCommandBlock()
      {
@@ -597,7 +629,7 @@
      }
  
      /**
-@@ -2671,7 +2867,7 @@
+@@ -2671,7 +2899,7 @@
      @SuppressWarnings("unchecked")
      @Override
      @Nullable
@@ -606,7 +638,7 @@
      {
          if (capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
          {
-@@ -2683,7 +2879,7 @@
+@@ -2683,7 +2911,7 @@
      }
  
      @Override
@@ -615,7 +647,7 @@
      {
          return capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
      }
-@@ -2702,7 +2898,7 @@
+@@ -2702,7 +2930,7 @@
          SYSTEM(1, "options.chat.visibility.system"),
          HIDDEN(2, "options.chat.visibility.hidden");
  
@@ -624,7 +656,7 @@
          private final int chatVisibility;
          private final String resourceKey;
  
-@@ -2732,7 +2928,7 @@
+@@ -2732,7 +2960,7 @@
  
          static
          {
@@ -633,7 +665,7 @@
              {
                  ID_LOOKUP[entityplayer$enumchatvisibility.chatVisibility] = entityplayer$enumchatvisibility;
              }
-@@ -2763,4 +2959,11 @@
+@@ -2763,4 +2991,11 @@
          OTHER_PROBLEM,
          NOT_SAFE;
      }

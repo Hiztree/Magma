@@ -14,6 +14,12 @@ public class CraftEnderman extends CraftMonster implements Enderman {
         super(server, entity);
     }
 
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public boolean teleportRandomly() {
+        return false;
+    }
+
     public MaterialData getCarriedMaterial() {
         IBlockState blockData = getHandle().getHeldBlockState();
         return (blockData == null) ? Material.AIR.getNewData((byte) 0) : CraftMagicNumbers.getMaterial(blockData.getBlock()).getNewData((byte) blockData.getBlock().getMetaFromState(blockData));

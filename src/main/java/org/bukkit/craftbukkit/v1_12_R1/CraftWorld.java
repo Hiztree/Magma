@@ -305,6 +305,32 @@ public class CraftWorld implements World {
         }
     }
 
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public int getEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public int getTileEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public int getTickableTileEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public int getChunkCount() {
+        return 0;
+    }
+
+    @Override
+    public int getPlayerCount() {
+        return 0;
+    }
+
     public Block getBlockAt(int x, int y, int z) {
         Chunk chunk = getChunkAt(x >> 4, z >> 4);
         return chunk == null ? null : chunk.getBlock(x & 0xF, y & 0xFF, z & 0xF);
@@ -374,6 +400,11 @@ public class CraftWorld implements World {
 
     public Chunk getChunkAt(Block block) {
         return getChunkAt(block.getX() >> 4, block.getZ() >> 4);
+    }
+
+    @Override
+    public boolean isChunkGenerated(int x, int z) {
+        return false;
     }
 
     public boolean isChunkLoaded(int x, int z) {
@@ -1789,6 +1820,12 @@ public class CraftWorld implements World {
                 CraftParticle.toData(particle, data)
 
         );
+
+    }
+
+    @Override
+    public <T> void spawnParticle(Particle particle, List<Player> receivers, Player source, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ, double extra,
+        T data, boolean force) {
 
     }
 

@@ -6,6 +6,7 @@ import org.bukkit.craftbukkit.v1_12_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftInventoryLlama;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Horse;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Llama;
 import org.bukkit.inventory.LlamaInventory;
 
@@ -63,5 +64,16 @@ public class CraftLlama extends CraftChestedHorse implements Llama {
     @Override
     public EntityType getType() {
         return EntityType.LLAMA;
+    }
+
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public void rangedAttack(LivingEntity target, float charge) {
+
+    }
+
+    @Override
+    public void setChargingAttack(boolean raiseHands) {
+
     }
 }

@@ -196,4 +196,15 @@ public final class CraftItemFactory implements ItemFactory {
     public Color getDefaultLeatherColor() {
         return DEFAULT_LEATHER_COLOR;
     }
+
+    // TODO: 12/07/2020 Magma Comeback
+    @Override
+    public ItemStack ensureServerConversions(ItemStack item) {
+        return null;
+    }
+
+    @Override
+    public String getI18NDisplayName(ItemStack item) {
+        return null;
+    }
 }
