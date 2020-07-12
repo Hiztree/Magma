@@ -8,15 +8,7 @@
  import javax.annotation.Nullable;
  import net.minecraft.block.Block;
  import net.minecraft.block.BlockJukebox;
-@@ -9,6 +11,7 @@
- import net.minecraft.init.Blocks;
- import net.minecraft.nbt.NBTTagCompound;
- import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-+import net.minecraft.util.KeyedObject;
- import net.minecraft.util.Mirror;
- import net.minecraft.util.ResourceLocation;
- import net.minecraft.util.Rotation;
-@@ -16,26 +19,55 @@
+@@ -16,26 +18,56 @@
  import net.minecraft.util.registry.RegistryNamespaced;
  import net.minecraft.util.text.ITextComponent;
  import net.minecraft.world.World;
@@ -40,6 +32,7 @@
      private int blockMetadata = -1;
      protected Block blockType;
 +    public Timing tickTimer = MinecraftTimings.getTileEntityTimings(this); // Paper
++    public boolean isLoadingStructure = false; // Paper
  
      public static void register(String id, Class <? extends TileEntity > clazz)
      {

@@ -3,6 +3,7 @@ package com.destroystokyo.paper;
 import static com.destroystokyo.paper.PaperConfig.log;
 
 import java.util.List;
+import net.minecraft.server.MinecraftServer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.spigotmc.SpigotWorldConfig;
 
@@ -270,4 +271,116 @@ public class PaperWorldConfig {
     private void useInhabitedTime() {
         useInhabitedTime = getBoolean("use-chunk-inhabited-timer", true);
     }
+
+    public int grassUpdateRate = 1;
+    private void grassUpdateRate() {
+        grassUpdateRate = Math.max(0, getInt("grass-spread-tick-rate", grassUpdateRate));
+        log("Grass Spread Tick Rate: " + grassUpdateRate);
+    }
+
+    public short keepLoadedRange;
+    private void keepLoadedRange() {
+        keepLoadedRange = (short) (getInt("keep-spawn-loaded-range", Math.min(spigotConfig.viewDistance, 8)) * 16);
+        log( "Keep Spawn Loaded Range: " + (keepLoadedRange/16));
+    }
+
+    public boolean useVanillaScoreboardColoring;
+    private void useVanillaScoreboardColoring() {
+        useVanillaScoreboardColoring = getBoolean("use-vanilla-world-scoreboard-name-coloring", false);
+    }
+
+    public boolean frostedIceEnabled = true;
+    public int frostedIceDelayMin = 20;
+    public int frostedIceDelayMax = 40;
+    private void frostedIce() {
+        this.frostedIceEnabled = this.getBoolean("frosted-ice.enabled", this.frostedIceEnabled);
+        this.frostedIceDelayMin = this.getInt("frosted-ice.delay.min", this.frostedIceDelayMin);
+        this.frostedIceDelayMax = this.getInt("frosted-ice.delay.max", this.frostedIceDelayMax);
+        log("Frosted Ice: " + (this.frostedIceEnabled ? "enabled" : "disabled") + " / delay: min=" + this.frostedIceDelayMin + ", max=" + this.frostedIceDelayMax);
+    }
+
+    public boolean autoReplenishLootables;
+    public boolean restrictPlayerReloot;
+    public boolean changeLootTableSeedOnFill;
+    public int maxLootableRefills;
+    public int lootableRegenMin;
+    public int lootableRegenMax;
+    private void enhancedLootables() {
+        autoReplenishLootables = getBoolean("lootables.auto-replenish", false);
+        restrictPlayerReloot = getBoolean("lootables.restrict-player-reloot", true);
+        changeLootTableSeedOnFill = getBoolean("lootables.reset-seed-on-fill", true);
+        maxLootableRefills = getInt("lootables.max-refills", -1);
+        lootableRegenMin = PaperConfig.getSeconds(getString("lootables.refresh-min", "12h"));
+        lootableRegenMax = PaperConfig.getSeconds(getString("lootables.refresh-max", "2d"));
+        if (autoReplenishLootables) {
+            log("Lootables: Replenishing every " +
+                PaperConfig.timeSummary(lootableRegenMin) + " to " +
+                PaperConfig.timeSummary(lootableRegenMax) +
+                (restrictPlayerReloot ? " (restricting reloot)" : "")
+            );
+        }
+    }
+
+    public boolean preventTntFromMovingInWater;
+    private void preventTntFromMovingInWater() {
+        if (PaperConfig.version < 13) {
+            boolean oldVal = getBoolean("enable-old-tnt-cannon-behaviors", false);
+            set("prevent-tnt-from-moving-in-water", oldVal);
+        }
+        preventTntFromMovingInWater = getBoolean("prevent-tnt-from-moving-in-water", false);
+        log("Prevent TNT from moving in water: " + preventTntFromMovingInWater);
+    }
+
+    public boolean altFallingBlockOnGround;
+    private void altFallingBlockOnGround() {
+        altFallingBlockOnGround = getBoolean("use-alternate-fallingblock-onGround-detection", false);
+    }
+
+    public boolean isHopperPushBased;
+    private void isHopperPushBased() {
+        isHopperPushBased = getBoolean("hopper.push-based", false);
+    }
+
+    public long delayChunkUnloadsBy;
+    private void delayChunkUnloadsBy() {
+        delayChunkUnloadsBy = PaperConfig.getSeconds(getString("delay-chunk-unloads-by", "10s"));
+        if (delayChunkUnloadsBy > 0) {
+            log("Delaying chunk unloads by " + delayChunkUnloadsBy + " seconds");
+            delayChunkUnloadsBy *= 1000;
+        }
+    }
+    public boolean skipEntityTickingInChunksScheduledForUnload = true;
+    private void skipEntityTickingInChunksScheduledForUnload() {
+        skipEntityTickingInChunksScheduledForUnload = getBoolean("skip-entity-ticking-in-chunks-scheduled-for-unload", skipEntityTickingInChunksScheduledForUnload);
+    }
+
+    public boolean elytraHitWallDamage = true;
+    private void elytraHitWallDamage() {
+        elytraHitWallDamage = getBoolean("elytra-hit-wall-damage", true);
+    }
+
+    public int autoSavePeriod = -1;
+    private void autoSavePeriod() {
+        autoSavePeriod = getInt("auto-save-interval", -1);
+        if (autoSavePeriod > 0) {
+            log("Auto Save Interval: " +autoSavePeriod + " (" + (autoSavePeriod / 20) + "s)");
+        } else if (autoSavePeriod < 0) {
+            autoSavePeriod = MinecraftServer.getServerInstance().autosavePeriod;
+        }
+    }
+    public int maxAutoSaveChunksPerTick = 24;
+    private void maxAutoSaveChunksPerTick() {
+        maxAutoSaveChunksPerTick = getInt("max-auto-save-chunks-per-tick", 24);
+    }
+
+    public int queueSizeAutoSaveThreshold = 50;
+    private void queueSizeAutoSaveThreshold() {
+        queueSizeAutoSaveThreshold = getInt("save-queue-limit-for-auto-save", 50);
+    }
+
+    public boolean removeCorruptTEs = false;
+    private void removeCorruptTEs() {
+        removeCorruptTEs = getBoolean("remove-corrupt-tile-entities", false);
+    }
+
 }

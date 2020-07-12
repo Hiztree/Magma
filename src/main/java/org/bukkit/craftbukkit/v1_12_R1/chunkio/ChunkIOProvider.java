@@ -31,8 +31,8 @@ class ChunkIOProvider implements AsynchronousExecutor.CallBackProvider<QueuedChu
 
     // sync stuff
     public void callStage2(QueuedChunk queuedChunk, Chunk chunk) throws RuntimeException {
-        if (chunk == null) {
-            // If the chunk loading failed just do it synchronously (may generate)
+        if (chunk == null || queuedChunk.provider.id2ChunkMap.containsKey(ChunkPos.asLong(queuedChunk.x, queuedChunk.z))) { // Paper - also call original if it was already loaded
+            // If the chunk loading failed (or was already loaded for some reason) just do it synchronously (may generate)
             queuedChunk.provider.provideChunk(queuedChunk.x, queuedChunk.z);
             return;
         }

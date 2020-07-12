@@ -17,3 +17,28 @@
  
              public MutableBlockPos()
              {
+@@ -403,6 +413,7 @@
+                 super(xIn, yIn, zIn);
+             }
+ 
++            public static BlockPos.PooledMutableBlockPos aquire() { return retain(); } // Paper - OBFHELPER
+             public static BlockPos.PooledMutableBlockPos retain()
+             {
+                 return retain(0, 0, 0);
+@@ -439,6 +450,7 @@
+                 return new BlockPos.PooledMutableBlockPos(xIn, yIn, zIn);
+             }
+ 
++            public void free() { release(); } // Paper - OBFHELPER
+             public void release()
+             {
+                 synchronized (POOL)
+@@ -463,6 +475,8 @@
+                 return (BlockPos.PooledMutableBlockPos)super.setPos(xIn, yIn, zIn);
+             }
+ 
++            public void setValues(int x, int y, int z) { setPos(x, y, z); } // Paper - OBFHELPER
++
+             @SideOnly(Side.CLIENT)
+             public BlockPos.PooledMutableBlockPos setPos(Entity entityIn)
+             {

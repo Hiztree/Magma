@@ -59,13 +59,13 @@
          }
  
 -        if (this.trackedEntity instanceof EntityItemFrame && this.updateCounter % 10 == 0)
-+        if (this.trackedEntity instanceof EntityItemFrame /*&& this.updateCounter % 10 == 0*/) // CraftBukkit - Moved below, should always enter this block
++        if (this.trackedEntity instanceof EntityItemFrame && this.updateCounter % 20 == 0) // Paper
          {
              EntityItemFrame entityitemframe = (EntityItemFrame)this.trackedEntity;
              ItemStack itemstack = entityitemframe.getDisplayedItem();
  
 -            if (itemstack.getItem() instanceof ItemMap)
-+            if (this.updateCounter % 10 == 0 && itemstack.getItem() instanceof ItemMap)// CraftBukkit - Moved this.updateCounter % 10 logic here so item frames do not enter the other blocks
++            if (itemstack.getItem() instanceof ItemMap) // Paper - moved back up
              {
                  MapData mapdata = ((ItemMap) itemstack.getItem()).getMapData(itemstack, this.trackedEntity.world);
  

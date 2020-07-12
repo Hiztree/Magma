@@ -12,7 +12,7 @@
  import com.google.common.util.concurrent.Futures;
  import com.google.common.util.concurrent.ListenableFuture;
  import com.google.common.util.concurrent.ListenableFutureTask;
-@@ -15,52 +18,68 @@
+@@ -15,52 +18,70 @@
  import io.netty.handler.codec.base64.Base64;
  import java.awt.GraphicsEnvironment;
  import java.awt.image.BufferedImage;
@@ -69,6 +69,8 @@
  import net.minecraft.profiler.ISnooperInfo;
  import net.minecraft.profiler.Profiler;
  import net.minecraft.profiler.Snooper;
++import net.minecraft.scoreboard.ScorePlayerTeam;
++import net.minecraft.scoreboard.Scoreboard;
  import net.minecraft.server.dedicated.DedicatedServer;
 +import net.minecraft.server.dedicated.PropertyManager;
  import net.minecraft.server.management.PlayerList;
@@ -82,7 +84,7 @@
  import net.minecraft.util.Util;
  import net.minecraft.util.datafix.DataFixer;
  import net.minecraft.util.datafix.DataFixesManager;
-@@ -73,35 +92,67 @@
+@@ -73,35 +94,67 @@
  import net.minecraft.world.MinecraftException;
  import net.minecraft.world.ServerWorldEventHandler;
  import net.minecraft.world.World;
@@ -158,7 +160,7 @@
      @SideOnly(Side.SERVER)
      private String hostname;
      private int serverPort = -1;
-@@ -128,7 +179,6 @@
+@@ -128,7 +181,6 @@
      private KeyPair serverKeyPair;
      private String serverOwner;
      private String folderName;
@@ -166,7 +168,7 @@
      private String worldName;
      private boolean isDemo;
      private boolean enableBonusChest;
-@@ -144,178 +194,302 @@
+@@ -144,178 +196,317 @@
      private final GameProfileRepository profileRepo;
      private final PlayerProfileCache profileCache;
      private long nanoTimeSinceStatusRefresh;
@@ -187,6 +189,7 @@
 +    public Thread primaryThread;
 +    public Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 +    public int autosavePeriod;
++    public boolean serverAutoSave = false; // Paper
 +    // CraftBukkit end
 +    // Spigot start
 +    public final SlackActivityAccountant slackActivityAccountant = new SlackActivityAccountant();
@@ -554,6 +557,20 @@
 +        this.playerList.setPlayerManager(this.worlds);
          this.setDifficultyForAllWorlds(this.getDifficulty());
          this.initialWorldChunkLoad();
++
++        // Paper start - Handle collideRule team for player collision toggle
++        final Scoreboard scoreboard = this.getEntityWorld().getScoreboard();
++        final java.util.Collection<String> toRemove = scoreboard.getTeams().stream().filter(team -> team.getName().startsWith("collideRule_")).map(ScorePlayerTeam::getName).collect(java.util.stream.Collectors.toList());
++        for (String teamName : toRemove) {
++            scoreboard.removeTeam(scoreboard.getTeam(teamName)); // Clean up after ourselves
++        }
++        if (!com.destroystokyo.paper.PaperConfig.enablePlayerCollisions) {
++            this.getPlayerList().collideRuleTeamName = org.apache.commons.lang3.StringUtils.left("collideRule_" + this.getEntityWorld().rand.nextInt(), 16);
++            ScorePlayerTeam collideTeam = scoreboard.createTeam(this.getPlayerList().collideRuleTeamName);
++            collideTeam.setSeeFriendlyInvisiblesEnabled(false); // Because we want to mimic them not being on a team at all
++        }
++        // Paper end
++
 +        for (WorldServer worlds : this.worldServerList) {
 +            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(worlds.getWorld()));
 +        }
@@ -566,7 +583,7 @@
          int i = 16;
          int j = 4;
          int k = 192;
-@@ -323,45 +497,43 @@
+@@ -323,45 +514,46 @@
          int i1 = 0;
          this.setUserMessage("menu.generatingTerrain");
          int j1 = 0;
@@ -584,8 +601,11 @@
 -        {
 -            for (int i2 = -192; i2 <= 192 && this.isServerRunning(); i2 += 16)
 -            {
-+        for (int l1 = -192; l1 <= 192 && this.isServerRunning(); l1 += 16) {
-+            for (int i2 = -192; i2 <= 192 && this.isServerRunning(); i2 += 16) {
++        // Paper start
++        short radius = worldserver.paperConfig.keepLoadedRange;
++        for (int l1 = -radius; l1 <= radius && this.isServerRunning(); l1 += 16) {
++            for (int i2 = -radius; i2 <= radius && this.isServerRunning(); i2 += 16) {
++                // Paper end
                  long j2 = getCurrentTimeMillis();
  
 -                if (j2 - k1 > 1000L)
@@ -636,7 +656,7 @@
          }
      }
  
-@@ -379,73 +551,80 @@
+@@ -379,73 +571,80 @@
  
      public abstract boolean shouldBroadcastConsoleToOps();
  
@@ -749,7 +769,7 @@
              {
                  if (worldserver1 != null)
                  {
-@@ -453,159 +632,216 @@
+@@ -453,159 +652,216 @@
                      worldserver1.flush();
                  }
              }
@@ -774,7 +794,7 @@
 +        if (org.spigotmc.SpigotConfig.saveUserCacheOnStopOnly) {
 +            Object[] p = {"usercache.json"};
 +            LOGGER.info("Saving usercache.json");
-+            this.profileCache.save();
++            this.profileCache.save(false); // Paper
 +        }
 +        // Spigot end
      }
@@ -1039,7 +1059,7 @@
                  BufferedImage bufferedimage = ImageIO.read(file1);
                  Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide");
                  Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high");
-@@ -613,52 +849,44 @@
+@@ -613,52 +869,44 @@
                  ByteBuf bytebuf1 = Base64.encode(bytebuf);
                  response.setFavicon("data:image/png;base64," + bytebuf1.toString(StandardCharsets.UTF_8));
                  bytebuf1.release(); // Forge: fix MC-122085
@@ -1105,7 +1125,7 @@
              this.startProfiling = false;
              this.profiler.profilingEnabled = true;
              this.profiler.clearProfiling();
-@@ -667,16 +895,15 @@
+@@ -667,16 +915,15 @@
          this.profiler.startSection("root");
          this.updateTimeLightAndEntities();
  
@@ -1127,18 +1147,34 @@
              }
  
              Collections.shuffle(Arrays.asList(agameprofile));
-@@ -684,7 +911,7 @@
+@@ -684,143 +931,184 @@
              this.statusResponse.invalidateJson();
          }
  
 -        if (this.tickCounter % 900 == 0)
-+        if (autosavePeriod > 0 && this.tickCounter % autosavePeriod == 0) // CraftBukkit
-         {
-             this.profiler.startSection("save");
-             this.playerList.saveAllPlayerData();
-@@ -693,134 +920,165 @@
+-        {
+-            this.profiler.startSection("save");
+-            this.playerList.saveAllPlayerData();
+-            this.saveAllWorlds(true);
+-            this.profiler.endSection();
++        this.profiler.startSection("save");
++        serverAutoSave = (autosavePeriod > 0 && this.tickCounter % autosavePeriod == 0); // Paper
++        int playerSaveInterval = com.destroystokyo.paper.PaperConfig.playerAutoSaveRate;
++        if (playerSaveInterval < 0) {
++            playerSaveInterval = autosavePeriod;
          }
++        if (playerSaveInterval > 0) { // CraftBukkit // Paper
++            this.playerList.saveAllPlayerData(playerSaveInterval);
++        }
  
++        server.playerCommandState = true;
++        for(World world : worlds){
++            if (world.paperConfig.autoSavePeriod > 0) world.getWorld().save(false); // Paper - Incremental / Configurable Auto Saving
++        }
++        server.playerCommandState = false;
++        this.profiler.endSection();
++
++
          this.profiler.startSection("tallying");
 -        this.tickTimeArray[this.tickCounter % 100] = System.nanoTime() - i;
 +        // Spigot start
@@ -1371,7 +1407,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1093,51 @@
+@@ -835,53 +1123,51 @@
          return ret;
      }
  
@@ -1449,7 +1485,7 @@
                  }
              });
          }
-@@ -889,145 +1145,115 @@
+@@ -889,145 +1175,115 @@
          return report;
      }
  
@@ -1639,7 +1675,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1261,75 @@
+@@ -1035,80 +1291,75 @@
          }
      }
  
@@ -1749,7 +1785,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1338,193 @@
+@@ -1117,228 +1368,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2032,7 +2068,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1533,254 @@
+@@ -1347,316 +1563,254 @@
          return null;
      }
  

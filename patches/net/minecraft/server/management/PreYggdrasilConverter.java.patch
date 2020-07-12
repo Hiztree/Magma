@@ -24,15 +24,17 @@
  import net.minecraft.server.MinecraftServer;
  import net.minecraft.server.dedicated.DedicatedServer;
  import net.minecraft.server.dedicated.PropertyManager;
-@@ -49,7 +51,7 @@
+@@ -49,8 +51,8 @@
              }
          }), String.class);
  
 -        if (server.isServerInOnlineMode())
-+        if (server.isServerInOnlineMode() || org.spigotmc.SpigotConfig.bungee) // Spigot: bungee = online mode, for now.
-         {
+-        {
++
++        if (server.isServerInOnlineMode() || (org.spigotmc.SpigotConfig.bungee && com.destroystokyo.paper.PaperConfig.bungeeOnlineMode)) { // Spigot: bungee = online mode, for now.  // Paper - Handle via setting
              server.getGameProfileRepository().findProfilesByNames(astring, Agent.MINECRAFT, callback);
          }
+         else
 @@ -135,9 +137,10 @@
                  {
                      userlistbans.readSavedFile();

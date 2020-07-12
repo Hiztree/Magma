@@ -984,12 +984,17 @@ public class CraftWorld implements World {
     }
 
     public void save() {
+        // Spigot start
+        save(true);
+    }
+    public void save(boolean forceSave) {
+        // Spigot end
         this.server.checkSaveState();
         try {
             boolean oldSave = world.disableLevelSaving;
 
             world.disableLevelSaving = false;
-            world.saveAllChunks(true, null);
+            world.saveAllChunks(forceSave, null); // Spigot
 
             world.disableLevelSaving = oldSave;
         } catch (MinecraftException ex) {
@@ -1500,8 +1505,9 @@ public class CraftWorld implements World {
         int chunkCoordX = chunkcoordinates.getX() >> 4;
         int chunkCoordZ = chunkcoordinates.getZ() >> 4;
         // Cycle through the 25x25 Chunks around it to load/unload the chunks.
-        for (int x = -12; x <= 12; x++) {
-            for (int z = -12; z <= 12; z++) {
+        int radius = world.paperConfig.keepLoadedRange / 16; // Paper
+        for (int x = -radius; x <= radius; x++) { // Paper
+            for (int z = -radius; z <= radius; z++) { // Paper
                 if (keepLoaded) {
                     loadChunk(chunkCoordX + x, chunkCoordZ + z);
                 } else {
@@ -1800,7 +1806,7 @@ public class CraftWorld implements World {
         ChunkProviderServer cps = world.getChunkProvider();
         for (net.minecraft.world.chunk.Chunk chunk : cps.id2ChunkMap.values()) {
             // If in use, skip it
-            if (isChunkInUse(chunk.x, chunk.z)) {
+            if (isChunkInUse(chunk.x, chunk.z) || chunk.scheduledForUnload != null) { // Paper - delayed chunk unloads
                 continue;
             }
 

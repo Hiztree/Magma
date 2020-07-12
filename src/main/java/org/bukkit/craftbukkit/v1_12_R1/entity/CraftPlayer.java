@@ -58,6 +58,7 @@ import net.minecraft.network.play.server.SPacketMaps;
 import net.minecraft.network.play.server.SPacketParticles;
 import net.minecraft.network.play.server.SPacketPlayerListHeaderFooter;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
+import net.minecraft.network.play.server.SPacketSetPassengers;
 import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.network.play.server.SPacketSpawnPosition;
 import net.minecraft.network.play.server.SPacketTitle;
@@ -207,7 +208,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         @Override
         public String getLocale() {
-            return getHandle().language;
+            return CraftPlayer.this.getLocale();
         }
 
         public void setAffectsSpawning(boolean affects) {
@@ -810,6 +811,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
         return true;
     }
+
+    // Paper start - Ugly workaround for SPIGOT-1915 & GH-114
+    @Override
+    public boolean setPassenger(org.bukkit.entity.Entity passenger) {
+        boolean wasSet = super.setPassenger(passenger);
+        if (wasSet) {
+            this.getHandle().connection.sendPacket(new SPacketSetPassengers(this.getHandle()));
+        }
+        return wasSet;
+    }
+    // Paper end
 
     @Override
     public void setSneaking(boolean sneak) {
@@ -1855,7 +1867,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public String getLocale() {
-        return getHandle().language;
+        // Paper start - Locale change event
+        final String locale = getHandle().language;
+        return locale != null ? locale : "en_us";
+        // Paper end
     }
 
 

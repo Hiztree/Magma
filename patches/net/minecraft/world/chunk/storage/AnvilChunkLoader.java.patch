@@ -50,15 +50,23 @@
  
      public AnvilChunkLoader(File chunkSaveLocationIn, DataFixer dataFixerIn)
      {
-@@ -55,6 +59,7 @@
+@@ -55,6 +59,15 @@
          return isChunkGeneratedAt(x, z);
      }
  
++    // Paper start
++    private long queuedSaves = 0;
++    private final java.util.concurrent.atomic.AtomicLong processedSaves = new java.util.concurrent.atomic.AtomicLong(0L);
++    public int getQueueSize() { return queue.size(); }
++    public long getQueuedSaves() { return queuedSaves; }
++    public long getProcessedSaves() { return processedSaves.longValue(); }
++    // Paper end
++
 +    // CraftBukkit start - Add async variant, provide compatibility
      @Nullable
      public Chunk loadChunk(World worldIn, int x, int z) throws IOException
      {
-@@ -74,20 +79,22 @@
+@@ -74,20 +87,22 @@
      @Nullable
      public Object[] loadChunk__Async(World worldIn, int x, int z) throws IOException
      {
@@ -86,7 +94,7 @@
          }
  
          return this.checkedReadChunkFromNBT__Async(worldIn, x, z, nbttagcompound);
-@@ -96,7 +103,7 @@
+@@ -96,7 +111,7 @@
      public boolean isChunkGeneratedAt(int x, int z)
      {
          ChunkPos chunkpos = new ChunkPos(x, z);
@@ -95,7 +103,7 @@
          return nbttagcompound != null ? true : RegionFileCache.chunkExists(this.chunkSaveLocation, x, z);
      }
  
-@@ -108,7 +115,7 @@
+@@ -108,7 +123,7 @@
      }
  
      @Nullable
@@ -104,7 +112,7 @@
      {
          if (!compound.hasKey("Level", 10))
          {
-@@ -134,7 +141,7 @@
+@@ -134,7 +149,7 @@
                      nbttagcompound.setInteger("xPos", x);
                      nbttagcompound.setInteger("zPos", z);
  
@@ -113,7 +121,7 @@
                      NBTTagList _tileEntities = nbttagcompound.getTagList("TileEntities", 10);
  
                      if (_tileEntities != null)
-@@ -146,21 +153,24 @@
+@@ -146,21 +161,24 @@
                              _nbt.setInteger("z", z * 16 + (_nbt.getInteger("z") - chunk.z * 16));
                          }
                      }
@@ -139,7 +147,7 @@
      {
          worldIn.checkSessionLock();
  
-@@ -171,10 +181,24 @@
+@@ -171,10 +189,24 @@
              nbttagcompound.setTag("Level", nbttagcompound1);
              nbttagcompound.setInteger("DataVersion", 1343);
              net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbttagcompound);
@@ -166,7 +174,7 @@
          }
          catch (Exception exception)
          {
-@@ -182,22 +206,33 @@
+@@ -182,22 +214,34 @@
          }
      }
  
@@ -182,6 +190,7 @@
 +                this.chunksToSave.put(pos, compound);
 +            }
          }
++        queuedSaves++; // Paper
 +        queue.add(new QueuedChunk(pos, compound)); // Paper - Chunk queue improvements
  
          ThreadedFileIOBase.getThreadedIOInstance().queueIO(this);
@@ -207,12 +216,13 @@
                  LOGGER.info("ThreadedAnvilChunkStorage ({}): All chunks are saved", (Object)this.chunkSaveLocation.getName());
              }
  
-@@ -206,30 +241,39 @@
+@@ -206,30 +250,40 @@
          else
          {
              ChunkPos chunkpos = this.chunksToSave.keySet().iterator().next();
 +
 +            ChunkPos chunkcoordintpair = chunk.coords; // Paper - Chunk queue improvements
++            processedSaves.incrementAndGet(); // Paper
 +
              boolean lvt_3_1_;
  
@@ -251,7 +261,7 @@
              }
  
              return lvt_3_1_;
-@@ -238,9 +282,9 @@
+@@ -238,9 +292,9 @@
  
      private void writeChunkData(ChunkPos pos, NBTTagCompound compound) throws IOException
      {
@@ -264,7 +274,7 @@
      }
  
      public void saveExtraChunkData(World worldIn, Chunk chunkIn) throws IOException
-@@ -255,13 +299,18 @@
+@@ -255,13 +309,18 @@
      {
          try
          {
@@ -286,7 +296,7 @@
          }
      }
  
-@@ -301,18 +350,17 @@
+@@ -301,18 +360,17 @@
          });
      }
  
@@ -308,7 +318,7 @@
  
          for (ExtendedBlockStorage extendedblockstorage : aextendedblockstorage)
          {
-@@ -348,6 +396,11 @@
+@@ -348,6 +406,11 @@
  
          compound.setTag("Sections", nbttaglist);
          compound.setByteArray("Biomes", chunkIn.getBiomeArray());
@@ -320,7 +330,7 @@
          chunkIn.setHasEntities(false);
          NBTTagList nbttaglist1 = new NBTTagList();
  
-@@ -472,12 +525,14 @@
+@@ -472,12 +535,14 @@
              chunk.getCapabilities().deserializeNBT(compound.getCompoundTag("ForgeCaps"));
          }
  
@@ -336,7 +346,7 @@
          NBTTagList nbttaglist1 = compound.getTagList("Entities", 10);
  
          for (int j1 = 0; j1 < nbttaglist1.tagCount(); ++j1)
-@@ -521,6 +576,7 @@
+@@ -521,6 +586,7 @@
                  worldIn.scheduleBlockUpdate(new BlockPos(nbttagcompound3.getInteger("x"), nbttagcompound3.getInteger("y"), nbttagcompound3.getInteger("z")), block, nbttagcompound3.getInteger("t"), nbttagcompound3.getInteger("p"));
              }
          }
@@ -344,7 +354,7 @@
      }
  
      @Nullable
-@@ -609,8 +665,11 @@
+@@ -609,8 +675,11 @@
  
      public static void spawnEntity(Entity entityIn, World worldIn)
      {
@@ -354,11 +364,11 @@
 +    }
 +
 +    public static void spawnEntity(Entity entityIn, World worldIn, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason reason) {
-+        if (worldIn.spawnEntity(entityIn, reason) && entityIn.isBeingRidden()) {
++        if (!entityIn.valid && worldIn.addEntity(entityIn, reason) && entityIn.isBeingRidden()) { // Paper
              for (Entity entity : entityIn.getPassengers())
              {
                  spawnEntity(entity, worldIn);
-@@ -656,4 +715,15 @@
+@@ -656,4 +725,15 @@
      {
          return this.chunksToSave.size();
      }

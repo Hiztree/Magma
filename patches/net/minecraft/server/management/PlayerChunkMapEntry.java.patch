@@ -14,3 +14,31 @@
      private int changes;
      private int changedSectionFilter;
      private long lastUpdateInhabitedTime;
+@@ -36,17 +36,26 @@
+     {
+         public void run()
+         {
+-            PlayerChunkMapEntry.this.chunk = PlayerChunkMapEntry.this.playerChunkMap.getWorldServer().getChunkProvider().loadChunk(PlayerChunkMapEntry.this.pos.x, PlayerChunkMapEntry.this.pos.z);
+             PlayerChunkMapEntry.this.loading = false;
++            PlayerChunkMapEntry.this.chunk = PlayerChunkMapEntry.this.playerChunkMap.getWorldServer().getChunkProvider().loadChunk(PlayerChunkMapEntry.this.pos.x, PlayerChunkMapEntry.this.pos.z);
++            markChunkUsed(); // Paper - delay chunk unloads
+         }
+     };
+     private boolean loading = true;
++    // Paper start - delay chunk unloads
++    public final void markChunkUsed() {
++        if (chunk != null && chunk.scheduledForUnload != null) {
++            chunk.scheduledForUnload = null;
++        }
++    }
++    // Paper end
+ 
+     public PlayerChunkMapEntry(PlayerChunkMap mapIn, int chunkX, int chunkZ)
+     {
+         this.playerChunkMap = mapIn;
+         this.pos = new ChunkPos(chunkX, chunkZ);
+         mapIn.getWorldServer().getChunkProvider().loadChunk(chunkX, chunkZ, this.loadedRunnable);
++        markChunkUsed(); // Paper - delay chunk unloads
+     }
+ 
+     public ChunkPos getPos()

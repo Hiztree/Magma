@@ -18,7 +18,11 @@
  import net.minecraft.network.play.server.SPacketEntityStatus;
  import net.minecraft.network.play.server.SPacketHeldItemChange;
  import net.minecraft.network.play.server.SPacketJoinGame;
-@@ -45,6 +50,7 @@
+@@ -42,9 +47,11 @@
+ import net.minecraft.potion.PotionEffect;
+ import net.minecraft.scoreboard.ScoreObjective;
+ import net.minecraft.scoreboard.ScorePlayerTeam;
++import net.minecraft.scoreboard.Scoreboard;
  import net.minecraft.scoreboard.ServerScoreboard;
  import net.minecraft.scoreboard.Team;
  import net.minecraft.server.MinecraftServer;
@@ -26,7 +30,7 @@
  import net.minecraft.stats.StatList;
  import net.minecraft.stats.StatisticsManagerServer;
  import net.minecraft.util.math.BlockPos;
-@@ -52,7 +58,7 @@
+@@ -52,7 +59,7 @@
  import net.minecraft.util.text.ChatType;
  import net.minecraft.util.text.ITextComponent;
  import net.minecraft.util.text.TextComponentTranslation;
@@ -35,7 +39,7 @@
  import net.minecraft.world.DimensionType;
  import net.minecraft.world.GameType;
  import net.minecraft.world.World;
-@@ -62,10 +68,39 @@
+@@ -62,10 +69,39 @@
  import net.minecraft.world.chunk.storage.AnvilChunkLoader;
  import net.minecraft.world.storage.IPlayerFileData;
  import net.minecraft.world.storage.WorldInfo;
@@ -75,7 +79,7 @@
  
  public abstract class PlayerList
  {
-@@ -76,15 +111,15 @@
+@@ -76,15 +112,15 @@
      private static final Logger LOGGER = LogManager.getLogger();
      private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
      private final MinecraftServer mcServer;
@@ -95,12 +99,13 @@
      private boolean whiteListEnforced;
      protected int maxPlayers;
      private int viewDistance;
-@@ -92,14 +127,22 @@
+@@ -92,14 +128,23 @@
      private boolean commandsAllowedForAll;
      private int playerPingIndex;
  
 +    private CraftServer cserver;
 +    private final Map<String,EntityPlayerMP> playersByName = new org.spigotmc.CaseInsensitiveMap<EntityPlayerMP>();
++    @Nullable public String collideRuleTeamName; // Paper - Team name used for collideRule
 +
      public PlayerList(MinecraftServer server)
      {
@@ -120,7 +125,7 @@
          this.mcServer = server;
          this.bannedPlayers.setLanServer(false);
          this.bannedIPs.setLanServer(false);
-@@ -125,6 +168,27 @@
+@@ -125,6 +170,27 @@
              playerIn.setPosition(spawnPoint.getX(), spawnPoint.getY(), spawnPoint.getZ());
          }
  
@@ -148,7 +153,7 @@
          playerIn.setWorld(playerWorld);
          playerIn.interactionManager.setWorld((WorldServer)playerIn.world);
          String s1 = "local";
-@@ -134,36 +198,61 @@
+@@ -134,36 +200,61 @@
              s1 = netManager.getRemoteAddress().toString();
          }
  
@@ -218,10 +223,16 @@
          nethandlerplayserver.setPlayerLocation(playerIn.posX, playerIn.posY, playerIn.posZ, playerIn.rotationYaw, playerIn.rotationPitch);
          this.updateTimeAndWeatherForPlayer(playerIn, worldserver);
  
-@@ -217,9 +306,11 @@
+@@ -217,9 +308,17 @@
  
          playerIn.addSelfToInternalCraftingInventory();
          net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerLoggedIn(playerIn);
++        // Paper start - Add to collideRule team if needed
++        final Scoreboard scoreboard = this.getServerInstance().getEntityWorld().getScoreboard();
++        if (this.collideRuleTeamName != null && scoreboard.getTeam(collideRuleTeamName) != null && playerIn.getTeam() == null) {
++            scoreboard.addPlayerToTeam(playerIn.getName(), collideRuleTeamName);
++        }
++        // Paper end
 +        // CraftBukkit - Moved from above, added world
 +        PlayerList.LOGGER.info(playerIn.getName() + "[" + s1 + "] logged in with entity id " + playerIn.getEntityId() + " at ([" + playerIn.world.worldInfo.getWorldName() + "]" + playerIn.posX + ", " + playerIn.posY + ", " + playerIn.posZ + ")");
      }
@@ -231,7 +242,7 @@
      {
          Set<ScoreObjective> set = Sets.<ScoreObjective>newHashSet();
  
-@@ -246,28 +337,29 @@
+@@ -246,28 +345,29 @@
  
      public void setPlayerManager(WorldServer[] worldServers)
      {
@@ -266,7 +277,7 @@
              }
              public void onDamageAmountChanged(WorldBorder border, double newAmount)
              {
-@@ -344,16 +436,16 @@
+@@ -344,16 +444,16 @@
      protected void writePlayerData(EntityPlayerMP playerIn)
      {
          if (playerIn.connection == null) return;
@@ -286,7 +297,7 @@
  
          if (playeradvancements != null)
          {
-@@ -363,19 +455,62 @@
+@@ -363,19 +463,62 @@
  
      public void playerLoggedIn(EntityPlayerMP playerIn)
      {
@@ -353,7 +364,7 @@
      }
  
      public void serverUpdateMovingPlayer(EntityPlayerMP playerIn)
-@@ -383,11 +518,25 @@
+@@ -383,11 +526,36 @@
          playerIn.getServerWorld().getPlayerChunkMap().updateMovingPlayer(playerIn);
      }
  
@@ -377,10 +388,21 @@
 +            quitMessage = playerQuitEvent.getQuitMessage();
 +        }
 +        // CraftBukkit end
++
++        // Paper start - Remove from collideRule team if needed
++        if (this.collideRuleTeamName != null) {
++            final Scoreboard scoreBoard = this.mcServer.getEntityWorld().getScoreboard();
++            final ScorePlayerTeam team = scoreBoard.getTeam(this.collideRuleTeamName);
++            if (playerIn.getTeam() == team && team != null) {
++                scoreBoard.removePlayerFromTeam(playerIn.getName(), team);
++            }
++        }
++        // Paper end
++
          this.writePlayerData(playerIn);
  
          if (playerIn.isRiding())
-@@ -414,17 +563,35 @@
+@@ -414,17 +582,35 @@
          worldserver.getPlayerChunkMap().removePlayer(playerIn);
          playerIn.getAdvancements().dispose();
          this.playerEntityList.remove(playerIn);
@@ -419,7 +441,7 @@
      }
  
      public String allowUserToConnect(SocketAddress address, GameProfile profile)
-@@ -463,6 +630,72 @@
+@@ -463,6 +649,72 @@
          }
      }
  
@@ -492,7 +514,7 @@
      public EntityPlayerMP createPlayerForUser(GameProfile profile)
      {
          UUID uuid = EntityPlayer.getUUID(profile);
-@@ -504,39 +737,41 @@
+@@ -504,39 +756,41 @@
          return new EntityPlayerMP(this.mcServer, this.mcServer.getWorld(0), profile, playerinteractionmanager);
      }
  
@@ -548,7 +570,7 @@
          entityplayermp.connection = playerIn.connection;
          entityplayermp.copyFrom(playerIn, conqueredEnd);
          entityplayermp.dimension = dimension;
-@@ -549,48 +784,179 @@
+@@ -549,48 +803,179 @@
              entityplayermp.addTag(s);
          }
  
@@ -749,7 +771,7 @@
      public void updatePermissionLevel(EntityPlayerMP player)
      {
          GameProfile gameprofile = player.getGameProfile();
-@@ -642,7 +1008,9 @@
+@@ -642,7 +1027,9 @@
  
      public void transferEntityToWorld(Entity entityIn, int lastDimension, WorldServer oldWorldIn, WorldServer toWorldIn)
      {
@@ -760,7 +782,7 @@
      }
  
      // TODO: Remove (1.13)
-@@ -729,11 +1097,158 @@
+@@ -729,11 +1116,158 @@
          entityIn.setWorld(toWorldIn);
      }
  
@@ -920,7 +942,7 @@
              this.playerPingIndex = 0;
          }
      }
-@@ -746,6 +1261,22 @@
+@@ -746,6 +1280,22 @@
          }
      }
  
@@ -943,7 +965,7 @@
      public void sendPacketToAllPlayersInDimension(Packet<?> packetIn, int dimension)
      {
          for (int i = 0; i < this.playerEntityList.size(); ++i)
-@@ -861,12 +1392,20 @@
+@@ -861,12 +1411,20 @@
          int i = this.mcServer.getOpPermissionLevel();
          this.ops.addEntry(new UserListOpsEntry(profile, this.mcServer.getOpPermissionLevel(), this.ops.bypassesPlayerLimit(profile)));
          this.sendPlayerPermissionLevel(this.getPlayerByUUID(profile.getId()), i);
@@ -964,7 +986,7 @@
      }
  
      private void sendPlayerPermissionLevel(EntityPlayerMP player, int permLevel)
-@@ -905,24 +1444,36 @@
+@@ -905,24 +1463,36 @@
      @Nullable
      public EntityPlayerMP getPlayerByUsername(String username)
      {
@@ -1014,7 +1036,7 @@
              {
                  double d0 = x - entityplayermp.posX;
                  double d1 = y - entityplayermp.posY;
-@@ -938,12 +1489,29 @@
+@@ -938,12 +1508,29 @@
  
      public void saveAllPlayerData()
      {
@@ -1048,7 +1070,7 @@
      public void addWhitelistedPlayer(GameProfile profile)
      {
          this.whiteListedPlayers.addEntry(new UserListWhitelistEntry(profile));
-@@ -988,16 +1556,21 @@
+@@ -988,16 +1575,21 @@
  
          if (worldIn.isRaining())
          {
@@ -1074,7 +1096,7 @@
          playerIn.connection.sendPacket(new SPacketHeldItemChange(playerIn.inventory.currentItem));
      }
  
-@@ -1079,17 +1652,26 @@
+@@ -1079,17 +1671,35 @@
  
      public void removeAllPlayers()
      {
@@ -1085,6 +1107,15 @@
 +        for (EntityPlayerMP player : this.playerEntityList) {
 +            player.connection.disconnect(this.mcServer.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
          }
++
++        // Paper start - Remove collideRule team if it exists
++        if (this.collideRuleTeamName != null) {
++            final Scoreboard scoreboard = this.getServerInstance().getEntityWorld().getScoreboard();
++            final ScorePlayerTeam team = scoreboard.getTeam(this.collideRuleTeamName);
++            if (team != null) scoreboard.removeTeam(team);
++        }
++        // Paper end
++
      }
  
 +    public void sendMessage(ITextComponent[] iChatBaseComponents) {
@@ -1105,7 +1136,7 @@
      }
  
      public void sendMessage(ITextComponent component)
-@@ -1097,10 +1679,19 @@
+@@ -1097,10 +1707,19 @@
          this.sendMessage(component, true);
      }
  
@@ -1127,7 +1158,7 @@
  
          if (statisticsmanagerserver == null)
          {
-@@ -1119,7 +1710,7 @@
+@@ -1119,7 +1738,7 @@
  
              statisticsmanagerserver = new StatisticsManagerServer(this.mcServer, file2);
              statisticsmanagerserver.readStatFile();
@@ -1136,7 +1167,7 @@
          }
  
          return statisticsmanagerserver;
-@@ -1128,14 +1719,14 @@
+@@ -1128,14 +1747,14 @@
      public PlayerAdvancements getPlayerAdvancements(EntityPlayerMP p_192054_1_)
      {
          UUID uuid = p_192054_1_.getUniqueID();
@@ -1153,7 +1184,7 @@
          }
  
          playeradvancements.setPlayer(p_192054_1_);
-@@ -1148,7 +1739,7 @@
+@@ -1148,7 +1767,7 @@
  
          if (this.mcServer.worlds != null)
          {
@@ -1162,7 +1193,7 @@
              {
                  if (worldserver != null)
                  {
-@@ -1176,9 +1767,10 @@
+@@ -1176,9 +1795,10 @@
  
      public void reloadResources()
      {

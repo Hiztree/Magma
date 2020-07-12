@@ -1018,7 +1018,7 @@ public final class CraftServer implements Server {
         System.out.println("Preparing start region for level " + (console.worldServerList.size() - 1) + " (Seed: " + internal.getSeed() + ")");
 
         if (internal.getWorld().getKeepSpawnInMemory()) {
-            short short1 = 196;
+            short short1 = internal.paperConfig.keepLoadedRange; // Paper
             long i = System.currentTimeMillis();
             for (int j = -short1; j <= short1; j += 16) {
                 for (int k = -short1; k <= short1; k += 16) {
@@ -1403,7 +1403,8 @@ public final class CraftServer implements Server {
             }
         GameProfile profile;
         // Only fetch an online UUID in online mode
-        if (MinecraftServer.getServerInst().isServerInOnlineMode() || (org.spigotmc.SpigotConfig.bungee)) {
+        if ( MinecraftServer.getServerInstance().isServerInOnlineMode() || (org.spigotmc.SpigotConfig.bungee && com.destroystokyo.paper.PaperConfig.bungeeOnlineMode)) // Paper - Handle via setting
+        {
             profile = console.getPlayerProfileCache().getGameProfileForUsername( name );
         } else {
             // Make an OfflinePlayer using an offline mode UUID since the name has no profile

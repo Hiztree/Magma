@@ -41,7 +41,7 @@
                      worldIn.setBlockToAir(pos);
                  }
                  else
-@@ -113,14 +117,23 @@
+@@ -113,14 +117,24 @@
              this.placeStaticBlock(worldIn, pos, state);
          }
  
@@ -51,6 +51,7 @@
  
          if (this.canFlowInto(worldIn, pos.down(), iblockstate1))
          {
++            if (!canFlowTo(worldIn, source, BlockFace.DOWN)) { return; } // Paper
 +            BlockFromToEvent event = new BlockFromToEvent(source, BlockFace.DOWN);
 +            worldIn.getServer().getPluginManager().callEvent(event);
 +
@@ -67,12 +68,13 @@
                  return;
              }
  
-@@ -150,14 +163,20 @@
+@@ -150,14 +164,27 @@
  
              for (EnumFacing enumfacing1 : set)
              {
 -                this.tryFlowInto(worldIn, pos.offset(enumfacing1), worldIn.getBlockState(pos.offset(enumfacing1)), k1);
 +                // CraftBukkit start
++                if (!canFlowTo(worldIn, source, org.bukkit.craftbukkit.v1_12_R1.block.CraftBlock.notchToBlockFace(enumfacing1))) { continue; } // Paper
 +                BlockFromToEvent event = new BlockFromToEvent(source, CraftBlock.notchToBlockFace(enumfacing1));
 +                worldIn.getServer().getPluginManager().callEvent(event);
 +
@@ -83,6 +85,12 @@
          }
      }
  
++    // Paper start
++    private boolean canFlowTo(World world, org.bukkit.block.Block source, BlockFace face) {
++        return source.getWorld().isChunkLoaded((source.getX() + face.getModX()) >> 4, (source.getZ() + face.getModZ()) >> 4);
++    }
++    // Paper end
++
      private void tryFlowInto(World worldIn, BlockPos pos, IBlockState state, int level)
      {
 -        if (this.canFlowInto(worldIn, pos, state))
@@ -90,7 +98,7 @@
          {
              if (state.getMaterial() != Material.AIR)
              {
-@@ -303,7 +322,76 @@
+@@ -303,7 +330,76 @@
      {
          if (!this.checkForMixing(worldIn, pos, state))
          {

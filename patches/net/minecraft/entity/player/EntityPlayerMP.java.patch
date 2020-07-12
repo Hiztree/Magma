@@ -74,7 +74,7 @@
  {
      private static final Logger LOGGER = LogManager.getLogger();
 -    private String language = "en_US";
-+    public String language = "en_us"; // CraftBukkit - lowercase
++    public String language = null; // PAIL: private -> public // Paper - default to null
 +    public long lastSave = MinecraftServer.currentTick; // Paper
      public NetHandlerPlayServer connection;
      public final MinecraftServer mcServer;
@@ -142,7 +142,7 @@
      public EntityPlayerMP(MinecraftServer server, WorldServer worldIn, GameProfile profile, PlayerInteractionManager interactionManagerIn)
      {
          super(worldIn, profile);
-@@ -188,8 +235,33 @@
+@@ -188,12 +235,37 @@
          {
              this.setPosition(this.posX, this.posY + 1.0D, this.posZ);
          }
@@ -176,6 +176,11 @@
      public void readEntityFromNBT(NBTTagCompound compound)
      {
          super.readEntityFromNBT(compound);
+-
++        if (this.posY > 300) this.posY = 257; // Paper - bring down to a saner Y level if out of world
+         if (compound.hasKey("playerGameType", 99))
+         {
+             if (this.getServer().getForceGamemode())
 @@ -218,6 +290,7 @@
          {
              this.recipeBook.read(compound.getCompoundTag("recipeBook"));
@@ -580,7 +585,21 @@
          if (this.isPlayerSleeping())
          {
              this.getServerWorld().getEntityTracker().sendToTrackingAndSelf(this, new SPacketAnimation(this, 2));
-@@ -844,6 +1074,12 @@
+@@ -795,6 +1025,13 @@
+         {
+             this.connection.setPlayerLocation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
+         }
++        // Paper start - "Fixes" an issue in which the vehicle player would not be notified that the passenger dismounted
++        if (entity instanceof EntityPlayer) {
++            WorldServer worldServer = (WorldServer) entity.getEntityWorld();
++            worldServer.entityTracker.removePlayerFromTrackers(this);
++            worldServer.entityTracker.track(this);
++        }
++        // Paper end
+     }
+ 
+     public boolean isEntityInvulnerable(DamageSource source)
+@@ -844,6 +1081,12 @@
          this.connection.sendPacket(new SPacketSignEditorOpen(signTile.getPos()));
      }
  
@@ -593,7 +612,7 @@
      public void getNextWindowId()
      {
          this.currentWindowId = this.currentWindowId % 100 + 1;
-@@ -851,15 +1087,23 @@
+@@ -851,15 +1094,23 @@
  
      public void displayGui(IInteractionObject guiOwner)
      {
@@ -619,7 +638,7 @@
              this.openContainer.windowId = this.currentWindowId;
              this.openContainer.addListener(this);
              net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
-@@ -868,6 +1112,29 @@
+@@ -868,6 +1119,29 @@
  
      public void displayGUIChest(IInventory chestInventory)
      {
@@ -649,7 +668,7 @@
          if (chestInventory instanceof ILootContainer && ((ILootContainer)chestInventory).getLootTable() != null && this.isSpectator())
          {
              this.sendStatusMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)), true);
-@@ -887,8 +1154,10 @@
+@@ -887,8 +1161,10 @@
                  {
                      this.connection.sendPacket(new SPacketChat(new TextComponentTranslation("container.isLocked", new Object[] {chestInventory.getDisplayName()}), ChatType.GAME_INFO));
                      this.connection.sendPacket(new SPacketSoundEffect(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, this.posX, this.posY, this.posZ, 1.0F, 1.0F));
@@ -660,7 +679,7 @@
              }
  
              this.getNextWindowId();
-@@ -896,12 +1165,14 @@
+@@ -896,12 +1172,14 @@
              if (chestInventory instanceof IInteractionObject)
              {
                  this.connection.sendPacket(new SPacketOpenWindow(this.currentWindowId, ((IInteractionObject)chestInventory).getGuiID(), chestInventory.getDisplayName(), chestInventory.getSizeInventory()));
@@ -677,7 +696,7 @@
              }
  
              this.openContainer.windowId = this.currentWindowId;
-@@ -912,8 +1183,15 @@
+@@ -912,8 +1190,15 @@
  
      public void displayVillagerTradeGui(IMerchant villager)
      {
@@ -694,7 +713,7 @@
          this.openContainer.windowId = this.currentWindowId;
          this.openContainer.addListener(this);
          net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
-@@ -933,6 +1211,13 @@
+@@ -933,6 +1218,13 @@
  
      public void openGuiHorseInventory(AbstractHorse horse, IInventory inventoryIn)
      {
@@ -708,7 +727,7 @@
          if (this.openContainer != this.inventoryContainer)
          {
              this.closeScreen();
-@@ -940,7 +1225,8 @@
+@@ -940,7 +1232,8 @@
  
          this.getNextWindowId();
          this.connection.sendPacket(new SPacketOpenWindow(this.currentWindowId, "EntityHorse", inventoryIn.getDisplayName(), inventoryIn.getSizeInventory(), horse.getEntityId()));
@@ -718,7 +737,7 @@
          this.openContainer.windowId = this.currentWindowId;
          this.openContainer.addListener(this);
      }
-@@ -988,6 +1274,12 @@
+@@ -988,6 +1281,12 @@
      {
          this.connection.sendPacket(new SPacketWindowItems(containerToSend.windowId, itemsList));
          this.connection.sendPacket(new SPacketSetSlot(-1, -1, this.inventory.getItemStack()));
@@ -731,7 +750,7 @@
      }
  
      public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue)
-@@ -1005,6 +1297,7 @@
+@@ -1005,6 +1304,7 @@
  
      public void closeScreen()
      {
@@ -739,7 +758,7 @@
          this.connection.sendPacket(new SPacketCloseWindow(this.openContainer.windowId));
          this.closeContainer();
      }
-@@ -1080,6 +1373,10 @@
+@@ -1080,6 +1380,10 @@
  
          for (ResourceLocation resourcelocation : p_193102_1_)
          {
@@ -750,7 +769,7 @@
              list.add(CraftingManager.getRecipe(resourcelocation));
          }
  
-@@ -1110,8 +1407,16 @@
+@@ -1110,8 +1414,16 @@
      public void setPlayerHealthUpdated()
      {
          this.lastHealth = -1.0E8F;
@@ -767,7 +786,7 @@
      public void sendStatusMessage(ITextComponent chatComponent, boolean actionBar)
      {
          this.connection.sendPacket(new SPacketChat(chatComponent, actionBar ? ChatType.GAME_INFO : ChatType.CHAT));
-@@ -1156,7 +1461,7 @@
+@@ -1156,7 +1468,7 @@
          this.lastExperience = -1;
          this.lastHealth = -1.0F;
          this.lastFoodLevel = -1;
@@ -776,7 +795,7 @@
          this.entityRemoveQueue.addAll(that.entityRemoveQueue);
          this.seenCredits = that.seenCredits;
          this.enteredNetherPosition = that.enteredNetherPosition;
-@@ -1246,6 +1551,18 @@
+@@ -1246,6 +1558,18 @@
  
      public void setGameType(GameType gameType)
      {
@@ -795,7 +814,7 @@
          this.interactionManager.setGameType(gameType);
          this.connection.sendPacket(new SPacketChangeGameState(3, (float)gameType.getID()));
  
-@@ -1280,34 +1597,32 @@
+@@ -1280,34 +1604,32 @@
  
      public boolean canUseCommand(int permLevel, String commandName)
      {
@@ -851,7 +870,7 @@
      }
  
      public String getPlayerIP()
-@@ -1320,6 +1635,17 @@
+@@ -1320,14 +1642,37 @@
  
      public void handleClientSettings(CPacketClientSettings packetIn)
      {
@@ -860,16 +879,28 @@
 +            PlayerChangedMainHandEvent event = new PlayerChangedMainHandEvent(getBukkitEntity(), getPrimaryHand() == EnumHandSide.LEFT ? MainHand.LEFT : MainHand.RIGHT);
 +            this.mcServer.server.getPluginManager().callEvent(event);
 +        }
-+        if (!this.language.equals(packetIn.getLang())) {
++
++        // Paper start - add PlayerLocaleChangeEvent
++        // Since the field is initialized to null, this event should always fire the first time the packet is received
++        String oldLocale = this.language;
+         this.language = packetIn.getLang();
++        if (!this.language.equals(oldLocale)) {
++            new com.destroystokyo.paper.event.player.PlayerLocaleChangeEvent(this.getBukkitEntity(), oldLocale, this.language).callEvent();
++        }
++        // Compat with Bukkit
++        oldLocale = oldLocale != null ? oldLocale : "en_us";
++        // Paper end
++
++        if (!oldLocale.equals(packetIn.getLang())) {
 +            PlayerLocaleChangeEvent event = new PlayerLocaleChangeEvent(getBukkitEntity(), packetIn.getLang());
 +            this.mcServer.server.getPluginManager().callEvent(event);
 +        }
 +        // CraftBukkit end
 +
-         this.language = packetIn.getLang();
++        this.language = packetIn.getLang();
          this.chatVisibility = packetIn.getChatVisibility();
          this.chatColours = packetIn.isColorsEnabled();
-@@ -1327,7 +1653,7 @@
+         this.getDataManager().set(PLAYER_MODEL_FLAG, Byte.valueOf((byte)packetIn.getModelPartFlags()));
          this.getDataManager().set(MAIN_HAND, Byte.valueOf((byte)(packetIn.getMainHand() == EnumHandSide.LEFT ? 0 : 1)));
      }
  
@@ -878,7 +909,7 @@
      {
          return this.chatVisibility;
      }
-@@ -1402,7 +1728,7 @@
+@@ -1402,7 +1747,7 @@
          if (entity != this.spectatingEntity)
          {
              this.connection.sendPacket(new SPacketCamera(this.spectatingEntity));
@@ -887,7 +918,7 @@
          }
      }
  
-@@ -1434,7 +1760,8 @@
+@@ -1434,7 +1779,8 @@
      @Nullable
      public ITextComponent getTabListDisplayName()
      {
@@ -897,7 +928,7 @@
      }
  
      public void swingArm(EnumHand hand)
-@@ -1455,13 +1782,20 @@
+@@ -1455,13 +1801,20 @@
  
      public void setElytraFlying()
      {
@@ -921,7 +952,7 @@
      }
  
      public PlayerAdvancements getAdvancements()
-@@ -1474,4 +1808,145 @@
+@@ -1474,4 +1827,145 @@
      {
          return this.enteredNetherPosition;
      }

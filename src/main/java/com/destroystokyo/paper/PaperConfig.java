@@ -214,4 +214,51 @@ public class PaperConfig {
         loadPermsBeforePlugins = getBoolean("settings.load-permissions-yml-before-plugins", true);
     }
 
+    public static int regionFileCacheSize = 256;
+    private static void regionFileCacheSize() {
+        regionFileCacheSize = getInt("settings.region-file-cache-size", 256);
+    }
+
+    public static boolean enablePlayerCollisions = true;
+    private static void enablePlayerCollisions() {
+        enablePlayerCollisions = getBoolean("settings.enable-player-collisions", true);
+    }
+
+    public static boolean saveEmptyScoreboardTeams = false;
+    private static void saveEmptyScoreboardTeams() {
+        saveEmptyScoreboardTeams = getBoolean("settings.save-empty-scoreboard-teams", false);
+    }
+
+    public static boolean bungeeOnlineMode = true;
+    private static void bungeeOnlineMode() {
+        bungeeOnlineMode = getBoolean("settings.bungee-online-mode", true);
+    }
+
+    public static int packetInSpamThreshold = 300;
+    private static void packetInSpamThreshold() {
+        if (version < 11) {
+            int oldValue = getInt("settings.play-in-use-item-spam-threshold", 300);
+            set("settings.incoming-packet-spam-threshold", oldValue);
+        }
+        packetInSpamThreshold = getInt("settings.incoming-packet-spam-threshold", 300);
+    }
+
+    public static String flyingKickPlayerMessage = "Flying is not enabled on this server";
+    public static String flyingKickVehicleMessage = "Flying is not enabled on this server";
+    private static void flyingKickMessages() {
+        flyingKickPlayerMessage = getString("messages.kick.flying-player", flyingKickPlayerMessage);
+        flyingKickVehicleMessage = getString("messages.kick.flying-vehicle", flyingKickVehicleMessage);
+    }
+
+    public static int playerAutoSaveRate = -1;
+    public static int maxPlayerAutoSavePerTick = 10;
+    private static void playerAutoSaveRate() {
+        playerAutoSaveRate = getInt("settings.player-auto-save-rate", -1);
+        maxPlayerAutoSavePerTick = getInt("settings.max-player-auto-save-per-tick", -1);
+        if (maxPlayerAutoSavePerTick == -1) { // -1 Automatic / "Recommended"
+            // 10 should be safe for everyone unless your mass spamming player auto save
+            maxPlayerAutoSavePerTick = (playerAutoSaveRate == -1 || playerAutoSaveRate > 100) ? 10 : 20;
+        }
+    }
+
 }

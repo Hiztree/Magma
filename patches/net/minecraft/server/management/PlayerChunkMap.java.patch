@@ -381,16 +381,29 @@
          ChunkPos chunkpos = entry.getPos();
          long i = getIndex(chunkpos.x, chunkpos.z);
          entry.updateChunkInhabitedTime();
-@@ -456,11 +556,48 @@
+@@ -456,11 +556,62 @@
          this.dirtyEntries.remove(entry);
          this.pendingSendToPlayers.remove(entry);
          this.entriesWithoutChunks.remove(entry);
--        Chunk chunk = entry.getChunk();
-+    }
++
+         Chunk chunk = entry.getChunk();
  
 -        if (chunk != null)
 -        {
 -            this.getWorldServer().getChunkProvider().queueUnload(chunk);
++        if (chunk != null) {
++            // Paper start - delay chunk unloads
++            if (world.paperConfig.delayChunkUnloadsBy <= 0) {
++                this.getWorldServer().getChunkProvider().queueUnload(chunk);
++            } else {
++                chunk.scheduledForUnload = System.currentTimeMillis();
++            }
++            // Paper end
+         }
++
++
+     }
++
 +    // CraftBukkit start - Sorter to load nearby chunks first
 +    private static class ChunkCoordComparator implements java.util.Comparator<ChunkPos> {
 +        private int x;
@@ -399,7 +412,7 @@
 +        public ChunkCoordComparator (EntityPlayer entityplayer) {
 +            x = (int) entityplayer.posX >> 4;
 +            z = (int) entityplayer.posZ >> 4;
-         }
++        }
 +
 +        public int compare(ChunkPos a, ChunkPos b) {
 +            if (a.equals(b)) {
@@ -431,6 +444,6 @@
 +                }
 +            }
 +        }
-     }
++    }
 +    // CraftBukkit end
  }

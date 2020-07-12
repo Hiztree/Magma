@@ -1,6 +1,7 @@
 package org.spigotmc;
 
 import co.aikar.timings.MinecraftTimings;
+import com.destroystokyo.paper.MCUtil;
 import net.minecraft.entity.*;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.effect.EntityWeatherEffect;
@@ -102,6 +103,7 @@ public class ActivationRange
         maxRange = Math.max( maxRange, miscActivationRange );
         maxRange = Math.min( ( world.spigotConfig.viewDistance << 4 ) - 8, maxRange );
 
+        Chunk chunk; // Paper
         for ( EntityPlayer player : world.playerEntities )
         {
 
@@ -120,9 +122,9 @@ public class ActivationRange
             {
                 for ( int j1 = k; j1 <= l; ++j1 )
                 {
-                    if ( world.getWorld().isChunkLoaded( i1, j1 ) )
+                    if ( (chunk = MCUtil.getLoadedChunkWithoutMarkingActive(world, i1, j1 )) != null ) // Paper
                     {
-                        activateChunkEntities( world.getChunkFromChunkCoords( i1, j1 ) );
+                        activateChunkEntities( chunk ); // Paper
                     }
                 }
             }
@@ -278,6 +280,10 @@ public class ActivationRange
         {
             isActive = false;
         }
+        // Paper start - Skip ticking in chunks scheduled for unload
+        if(entity.world.paperConfig.skipEntityTickingInChunksScheduledForUnload && (chunk == null || chunk.isUnloading() || chunk.scheduledForUnload != null))
+            isActive = false;
+        // Paper end
         return isActive;
 
     }
