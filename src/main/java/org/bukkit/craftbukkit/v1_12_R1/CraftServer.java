@@ -128,6 +128,7 @@ import org.bukkit.craftbukkit.v1_12_R1.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.v1_12_R1.util.CraftNamespacedKey;
 import org.bukkit.craftbukkit.v1_12_R1.util.DatFileFilter;
 import org.bukkit.craftbukkit.v1_12_R1.util.Versioning;
+import org.bukkit.craftbukkit.v1_12_R1.util.Waitable;
 import org.bukkit.craftbukkit.v1_12_R1.util.permissions.CraftDefaultPermissions;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -245,6 +246,7 @@ public final class CraftServer implements Server {
     public CraftScoreboardManager scoreboardManager;
     public boolean playerCommandState;
     public int reloadCount;
+    public static Exception excessiveVelEx; // Paper - Velocity warnings
     private YamlConfiguration configuration;
     private YamlConfiguration commandsConfiguration;
     private int monsterSpawn = -1;
@@ -739,6 +741,29 @@ public final class CraftServer implements Server {
     public boolean dispatchCommand(CommandSender sender, String commandLine) {
         Validate.notNull(sender, "Sender cannot be null");
         Validate.notNull(commandLine, "CommandLine cannot be null");
+
+        // Paper Start
+        if (!org.spigotmc.AsyncCatcher.shuttingDown && !Bukkit.isPrimaryThread()) {
+            final CommandSender fSender = sender;
+            final String fCommandLine = commandLine;
+            Bukkit.getLogger().log(Level.SEVERE, "Command Dispatched Async: " + commandLine);
+            Bukkit.getLogger().log(Level.SEVERE, "Please notify author of plugin causing this execution to fix this bug! see: http://bit.ly/1oSiM6C", new Throwable());
+            Waitable<Boolean> wait = new Waitable<Boolean>() {
+                @Override
+                protected Boolean evaluate() {
+                    return dispatchCommand(fSender, fCommandLine);
+                }
+            };
+            net.minecraft.server.MinecraftServer.getServerInstance().processQueue.add(wait);
+            try {
+                return wait.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // This is proper habit for java. If we aren't handling it, pass it on!
+            } catch (Exception e) {
+                throw new RuntimeException("Exception processing dispatch command", e.getCause());
+            }
+        }
+        // Paper End
 
         if (commandMap.dispatch(sender, commandLine)) {
             return true;

@@ -16,7 +16,14 @@
  
  public class BlockCactus extends Block implements net.minecraftforge.common.IPlantable
  {
-@@ -54,10 +54,11 @@
+@@ -48,16 +48,17 @@
+                 ;
+             }
+ 
+-            if (i < 3)
++            if (i < worldIn.paperConfig.cactusMaxHeight) { // Paper - Configurable growth height
+             {
+                 int j = ((Integer)state.getValue(AGE)).intValue();
  
                  if(net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, blockpos, state, true))
                  {

@@ -513,4 +513,15 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     public void setCollidable(boolean collidable) {
         getHandle().collides = collidable;
     }
+
+    // Paper start
+    @Override
+    public int getArrowsStuck() {
+        return getHandle().getArrowCountInEntity();
+    }
+    @Override
+    public void setArrowsStuck(int arrows) {
+        getHandle().setArrowCountInEntity(arrows);
+    }
+    // Paper end
 }

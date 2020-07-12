@@ -74,9 +74,9 @@ public class ActivationRange
             || entity instanceof MultiPartEntityPart
             || entity instanceof EntityWither
             || entity instanceof EntityFireball
-            || entity instanceof EntityFallingBlock
             || entity instanceof EntityWeatherEffect
             || entity instanceof EntityTNTPrimed
+            || entity instanceof EntityFallingBlock // Paper - Always tick falling blocks
             || entity instanceof EntityEnderCrystal
             || entity instanceof EntityFireworkRocket
             || (entity.getClass().getSuperclass() == Entity.class && !entity.isCreatureType(EnumCreatureType.CREATURE, false))

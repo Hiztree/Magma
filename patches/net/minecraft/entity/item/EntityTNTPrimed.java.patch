@@ -28,7 +28,21 @@
          this.prevPosX = this.posX;
          this.prevPosY = this.posY;
          this.prevPosZ = this.posZ;
-@@ -84,12 +91,14 @@
+@@ -69,6 +76,13 @@
+         }
+ 
+         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
++
++        // Paper start - Configurable TNT entity height nerf
++        if (this.world.paperConfig.entityTNTHeightNerf != 0 && this.posX > this.world.paperConfig.entityTNTHeightNerf) {
++            this.setDead();
++        }
++        // Paper end
++
+         this.motionX *= 0.9800000190734863D;
+         this.motionY *= 0.9800000190734863D;
+         this.motionZ *= 0.9800000190734863D;
+@@ -84,12 +98,14 @@
  
          if (this.fuse <= 0)
          {
@@ -44,7 +58,7 @@
          }
          else
          {
-@@ -100,8 +109,15 @@
+@@ -100,8 +116,15 @@
  
      private void explode()
      {
@@ -62,3 +76,18 @@
      }
  
      protected void writeEntityToNBT(NBTTagCompound compound)
+@@ -111,6 +134,14 @@
+ 
+     protected void readEntityFromNBT(NBTTagCompound compound)
+     {
++        // Paper start - Try and load origin location from the old NBT tags for backwards compatibility
++        if (compound.hasKey("SourceLoc_x")) {
++            int srcX = compound.getInteger("SourceLoc_x");
++            int srcY = compound.getInteger("SourceLoc_y");
++            int srcZ = compound.getInteger("SourceLoc_z");
++            origin = new org.bukkit.Location(world.getWorld(), srcX, srcY, srcZ);
++        }
++        // Paper end
+         this.setFuse(compound.getShort("Fuse"));
+     }
+ 

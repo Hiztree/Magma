@@ -197,4 +197,10 @@ public class PaperConfig {
             " - Interval: " + timeSummary(Timings.getHistoryInterval() / 20) +
             " - Length: " + timeSummary(Timings.getHistoryLength() / 20));
     }
+
+    public static int minChunkLoadThreads = 2;
+    private static void chunkLoadThreads() {
+        minChunkLoadThreads = Math.min(6, getInt("settings.min-chunk-load-threads", 2)); // Keep people from doing stupid things with max of 6
+    }
+
 }

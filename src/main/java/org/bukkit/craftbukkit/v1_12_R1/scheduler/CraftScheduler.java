@@ -1,6 +1,8 @@
 package org.bukkit.craftbukkit.v1_12_R1.scheduler;
 
 import co.aikar.timings.MinecraftTimings;
+import com.destroystokyo.paper.event.server.ServerExceptionEvent;
+import com.destroystokyo.paper.exception.ServerSchedulerException;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
@@ -438,7 +440,7 @@ public class CraftScheduler implements BukkitScheduler {
                             Level.WARNING,
                             msg,
                             throwable);
-                    //task.getOwner().getServer().getPluginManager().callEvent(new ServerExceptionEvent(new ServerSchedulerException(msg, throwable, task)));
+                    task.getOwner().getServer().getPluginManager().callEvent(new ServerExceptionEvent(new ServerSchedulerException(msg, throwable, task)));
                     // Paper end
                 } finally {
                     currentTask = null;

@@ -34,7 +34,23 @@
                  {
                      this.world.setBlockToAir(blockpos);
                  }
-@@ -170,7 +170,7 @@
+@@ -132,6 +132,15 @@
+ 
+             this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+ 
++            // Paper start - Configurable EntityFallingBlock height nerf
++            if (this.world.paperConfig.fallingBlockHeightNerf != 0 && this.posX > this.world.paperConfig.fallingBlockHeightNerf) {
++                if (this.shouldDropItem && this.world.getGameRules().getBoolean("doEntityDrops")) {
++                    this.dropItem(new ItemStack(block, 1, block.damageDropped(this.fallTile)), 0.0F);
++                }
++                this.setDead();
++            }
++            // Paper end
++
+             if (!this.world.isRemote)
+             {
+                 BlockPos blockpos1 = new BlockPos(this);
+@@ -170,7 +179,7 @@
                      if (!flag1 && BlockFalling.canFallThrough(this.world.getBlockState(new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ))))
                      {
                          this.onGround = false;
@@ -43,7 +59,7 @@
                      }
  
                      this.motionX *= 0.699999988079071D;
-@@ -185,10 +185,20 @@
+@@ -185,10 +194,20 @@
                          {
                              if (this.world.mayPlace(block, blockpos1, true, EnumFacing.UP, this) && (flag1 || !BlockFalling.canFallThrough(this.world.getBlockState(blockpos1.down()))) && this.world.setBlockState(blockpos1, this.fallTile, 3))
                              {
@@ -64,7 +80,7 @@
  
                                  if (this.tileEntityData != null && block.hasTileEntity(this.fallTile))
                                  {
-@@ -248,7 +258,9 @@
+@@ -248,7 +267,9 @@
  
                  for (Entity entity : list)
                  {
@@ -74,3 +90,20 @@
                  }
  
                  if (flag && (double)this.rand.nextFloat() < 0.05000000074505806D + (double)i * 0.05D)
+@@ -336,6 +357,16 @@
+         {
+             this.fallTile = Blocks.SAND.getDefaultState();
+         }
++
++        // Paper start - Try and load origin location from the old NBT tags for backwards compatibility
++        if (compound.hasKey("SourceLoc_x")) {
++            int srcX = compound.getInteger("SourceLoc_x");
++            int srcY = compound.getInteger("SourceLoc_y");
++            int srcZ = compound.getInteger("SourceLoc_z");
++            origin = new org.bukkit.Location(world.getWorld(), srcX, srcY, srcZ);
++        }
++        // Paper end
++
+     }
+ 
+     public void setHurtEntities(boolean p_145806_1_)

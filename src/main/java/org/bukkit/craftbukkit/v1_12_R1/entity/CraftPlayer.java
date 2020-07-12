@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.v1_12_R1.entity;
 
+import com.destroystokyo.paper.Title;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
@@ -55,6 +56,7 @@ import net.minecraft.network.play.server.SPacketEffect;
 import net.minecraft.network.play.server.SPacketEntityProperties;
 import net.minecraft.network.play.server.SPacketMaps;
 import net.minecraft.network.play.server.SPacketParticles;
+import net.minecraft.network.play.server.SPacketPlayerListHeaderFooter;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.network.play.server.SPacketSpawnPosition;
@@ -127,6 +129,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     private static final WeakHashMap<Plugin, WeakReference<Plugin>> pluginWeakReferences = new WeakHashMap<>();
     private int hash = 0;
     private double health = 20;
+
+    // Paper start
+    private org.bukkit.event.player.PlayerResourcePackStatusEvent.Status resourcePackStatus;
+    private String resourcePackHash;
+    // Paper end
+
     // Spigot start
     private final Player.Spigot spigot = new Player.Spigot() {
 
@@ -200,6 +208,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         @Override
         public String getLocale() {
             return getHandle().language;
+        }
+
+        public void setAffectsSpawning(boolean affects) {
+            getHandle().affectsSpawning = affects;
+        }
+
+        @Override
+        public boolean getAffectsSpawning() {
+            return getHandle().affectsSpawning;
         }
 
         @Override
@@ -343,6 +360,73 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             sendMessage(message);
         }
     }
+
+    // Paper start
+    @Override
+    public void setPlayerListHeaderFooter(BaseComponent[] header, BaseComponent[] footer) {
+        SPacketPlayerListHeaderFooter packet = new SPacketPlayerListHeaderFooter();
+        packet.headerPaper = header;
+        packet.footerPaper = footer;
+        getHandle().connection.sendPacket(packet);
+    }
+    @Override
+    public void setPlayerListHeaderFooter(BaseComponent header, BaseComponent footer) {
+        this.setPlayerListHeaderFooter(header == null ? null : new BaseComponent[]{header},
+            footer == null ? null : new BaseComponent[]{footer});
+    }
+    @Override
+    public void setTitleTimes(int fadeInTicks, int stayTicks, int fadeOutTicks) {
+        getHandle().connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TIMES, (BaseComponent[]) null, fadeInTicks, stayTicks, fadeOutTicks));
+    }
+    @Override
+    public void setSubtitle(BaseComponent[] subtitle) {
+        getHandle().connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, subtitle, 0, 0, 0));
+    }
+    @Override
+    public void setSubtitle(BaseComponent subtitle) {
+        setSubtitle(new BaseComponent[]{subtitle});
+    }
+    @Override
+    public void showTitle(BaseComponent[] title) {
+        getHandle().connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, title, 0, 0, 0));
+    }
+    @Override
+    public void showTitle(BaseComponent title) {
+        showTitle(new BaseComponent[]{title});
+    }
+    @Override
+    public void showTitle(BaseComponent[] title, BaseComponent[] subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
+        setTitleTimes(fadeInTicks, stayTicks, fadeOutTicks);
+        setSubtitle(subtitle);
+        showTitle(title);
+    }
+    @Override
+    public void showTitle(BaseComponent title, BaseComponent subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
+        setTitleTimes(fadeInTicks, stayTicks, fadeOutTicks);
+        setSubtitle(subtitle);
+        showTitle(title);
+    }
+    @Override
+    public void sendTitle(Title title) {
+        Preconditions.checkNotNull(title, "Title is null");
+        setTitleTimes(title.getFadeIn(), title.getStay(), title.getFadeOut());
+        setSubtitle(title.getSubtitle() == null ? new BaseComponent[0] : title.getSubtitle());
+        showTitle(title.getTitle());
+    }
+    @Override
+    public void updateTitle(Title title) {
+        Preconditions.checkNotNull(title, "Title is null");
+        setTitleTimes(title.getFadeIn(), title.getStay(), title.getFadeOut());
+        if (title.getSubtitle() != null) {
+            setSubtitle(title.getSubtitle());
+        }
+        showTitle(title.getTitle());
+    }
+    @Override
+    public void hideTitle() {
+        getHandle().connection.sendPacket(new SPacketTitle(SPacketTitle.Type.CLEAR, (BaseComponent[]) null, 0, 0, 0));
+    }
+    // Paper end
 
     @Override
     public String getDisplayName() {
@@ -721,7 +805,8 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         if (fromWorld == toWorld) {
             entity.connection.teleport(to);
         } else {
-            server.getHandle().moveToWorld(entity, toWorld.dimension, true, to, true);
+            // Paper - Configurable suffocation check
+            server.getHandle().moveToWorld(entity, toWorld.dimension, true, to, !toWorld.paperConfig.disableTeleportationSuffocationCheck);
         }
         return true;
     }
@@ -1322,6 +1407,32 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     @Override
+    public void setResourcePack(String url, String hash) {
+        Validate.notNull(url, "Resource pack URL cannot be null");
+        Validate.notNull(hash, "Hash cannot be null");
+        this.getHandle().loadResourcePack(url, hash);
+    }
+
+    @Override
+    public org.bukkit.event.player.PlayerResourcePackStatusEvent.Status getResourcePackStatus() {
+        return this.resourcePackStatus;
+    }
+
+    @Override
+    public String getResourcePackHash() {
+        return this.resourcePackHash;
+    }
+
+    @Override
+    public boolean hasResourcePack() {
+        return this.resourcePackStatus == org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED;
+    }
+
+    public void setResourcePackStatus(org.bukkit.event.player.PlayerResourcePackStatusEvent.Status status) {
+        this.resourcePackStatus = status;
+    }
+
+    @Override
     public void setTexturePack(String url) {
         setResourcePack(url);
     }
@@ -1427,12 +1538,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public void setFlying(boolean value) {
+        boolean needsUpdate = getHandle().capabilities.isFlying != value; // Paper - Only refresh abilities if needed
         if (!getAllowFlight() && value) {
             throw new IllegalArgumentException("Cannot make player fly if getAllowFlight() is false");
         }
 
         getHandle().capabilities.isFlying = value;
-        getHandle().sendPlayerAbilities();
+        if (needsUpdate) getHandle().sendPlayerAbilities(); // Paper - Only refresh abilities if needed
     }
 
     @Override
@@ -1744,6 +1856,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     @Override
     public String getLocale() {
         return getHandle().language;
+    }
+
+
+    @Override
+    public boolean getAffectsSpawning() {
+        return this.getHandle().affectsSpawning;
+    }
+
+    @Override
+    public void setAffectsSpawning(boolean affects) {
+        this.getHandle().affectsSpawning = affects;
     }
 
     public Player.Spigot spigot()

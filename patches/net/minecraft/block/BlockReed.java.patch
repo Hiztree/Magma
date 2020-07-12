@@ -8,7 +8,14 @@
  
  public class BlockReed extends Block implements net.minecraftforge.common.IPlantable
  {
-@@ -57,9 +58,11 @@
+@@ -51,15 +52,17 @@
+                     ;
+                 }
+ 
+-                if (i < 3)
++                if (i < worldIn.paperConfig.reedMaxHeight) { // Paper - Configurable growth height
+                 {
+                     int j = ((Integer)state.getValue(AGE)).intValue();
  
                      if(net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, true))
                      {

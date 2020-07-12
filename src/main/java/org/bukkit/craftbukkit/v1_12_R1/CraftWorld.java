@@ -349,6 +349,24 @@ public class CraftWorld implements World {
         }
     }
 
+    // Paper start - Async chunk load API
+    public void getChunkAtAsync(final int x, final int z, final ChunkLoadCallback callback) {
+        final ChunkProviderServer cps = this.world.getChunkProvider();
+        cps.loadChunk(x, z, new Runnable() {
+            @Override
+            public void run() {
+                callback.onLoad(cps.provideChunk(x, z).bukkitChunk);
+            }
+        });
+    }
+    public void getChunkAtAsync(Block block, ChunkLoadCallback callback) {
+        getChunkAtAsync(block.getX() >> 4, block.getZ() >> 4, callback);
+    }
+    public void getChunkAtAsync(Location location, ChunkLoadCallback callback) {
+        getChunkAtAsync(location.getBlockX() >> 4, location.getBlockZ() >> 4, callback);
+    }
+    // Paper end
+
     public Chunk getChunkAt(int x, int z) {
         net.minecraft.world.chunk.Chunk chunk = this.world.getChunkProvider().provideChunk(x, z);
         return chunk == null ? null : chunk.bukkitChunk;

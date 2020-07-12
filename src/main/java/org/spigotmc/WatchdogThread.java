@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import org.bukkit.Bukkit;
+import org.magmafoundation.magma.Magma;
 
 public class WatchdogThread extends Thread
 {
@@ -20,7 +21,7 @@ public class WatchdogThread extends Thread
 
     private WatchdogThread(long timeoutTime, boolean restart)
     {
-        super( "Spigot Watchdog Thread" );
+        super( "Paper Watchdog Thread" );
         this.timeoutTime = timeoutTime;
         this.restart = restart;
     }
@@ -57,19 +58,31 @@ public class WatchdogThread extends Thread
             {
                 Logger log = Bukkit.getServer().getLogger();
                 log.log( Level.SEVERE, "The server has stopped responding!" );
-                log.log( Level.SEVERE, "Please report this to http://www.spigotmc.org/" );
+                log.log( Level.SEVERE, "Please report this to http://github.com/Magmafoundation/Magma/issues" );
                 log.log( Level.SEVERE, "Be sure to include ALL relevant console errors and Minecraft crash reports" );
-                log.log( Level.SEVERE, "Spigot version: " + Bukkit.getServer().getVersion() );
-                //
-//                if(World.haveWeSilencedAPhysicsCrash)
-//                {
-//                    log.log( Level.SEVERE, "------------------------------" );
-//                    log.log( Level.SEVERE, "During the run of the server, a physics stackoverflow was supressed" );
-//                    log.log( Level.SEVERE, "near " + World.blockLocation);
-//                }
-                //
+                log.log( Level.SEVERE, "Magma version: " + Magma.getVersion());
+
+                if(World.haveWeSilencedAPhysicsCrash)
+                {
+                    log.log( Level.SEVERE, "------------------------------" );
+                    log.log( Level.SEVERE, "During the run of the server, a physics stackoverflow was supressed" );
+                    log.log( Level.SEVERE, "near " + World.blockLocation);
+                }
+                // Paper start - Warn in watchdog if an excessive velocity was ever set
+                if ( org.bukkit.craftbukkit.v1_12_R1.CraftServer.excessiveVelEx != null )
+                {
+                    log.log( Level.SEVERE, "------------------------------" );
+                    log.log( Level.SEVERE, "During the run of the server, a plugin set an excessive velocity on an entity" );
+                    log.log( Level.SEVERE, "This may be the cause of the issue, or it may be entirely unrelated" );
+                    log.log( Level.SEVERE, org.bukkit.craftbukkit.v1_12_R1.CraftServer.excessiveVelEx.getMessage());
+                    for ( StackTraceElement stack : org.bukkit.craftbukkit.v1_12_R1.CraftServer.excessiveVelEx.getStackTrace() )
+                    {
+                        log.log( Level.SEVERE, "\t\t" + stack );
+                    }
+                }
+                // Paper end
                 log.log( Level.SEVERE, "------------------------------" );
-                log.log( Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Spigot!):" );
+                log.log( Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Magma!):" );
                 dumpThread( ManagementFactory.getThreadMXBean().getThreadInfo( MinecraftServer.getServerInstance().primaryThread.getId(), Integer.MAX_VALUE ), log );
                 log.log( Level.SEVERE, "------------------------------" );
                 //

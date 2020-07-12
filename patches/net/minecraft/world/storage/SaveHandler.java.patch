@@ -36,7 +36,7 @@
 -
 +            // Spigot Start
 +            boolean usingWrongFile = false;
-+            if ( !file1.exists() )
++            if ( org.bukkit.Bukkit.getOnlineMode() && !file1.exists() ) // Paper - Check online mode first
 +            {
 +                file1 = new File( this.playersDirectory, UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + player.getName() ).getBytes( "UTF-8" ) ).toString() + ".dat");
 +                if (file1.exists())

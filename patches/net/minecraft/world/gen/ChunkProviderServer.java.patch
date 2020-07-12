@@ -1,13 +1,14 @@
 --- ../src-base/minecraft/net/minecraft/world/gen/ChunkProviderServer.java
 +++ ../src-work/minecraft/net/minecraft/world/gen/ChunkProviderServer.java
-@@ -1,5 +1,6 @@
+@@ -1,5 +1,7 @@
  package net.minecraft.world.gen;
  
 +import co.aikar.timings.Timing;
++import com.destroystokyo.paper.exception.ServerInternalException;
  import com.google.common.collect.Lists;
  import com.google.common.collect.Sets;
  import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-@@ -26,16 +27,17 @@
+@@ -26,16 +28,17 @@
  import net.minecraft.world.chunk.storage.IChunkLoader;
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
@@ -27,7 +28,7 @@
  
      public ChunkProviderServer(WorldServer worldObjIn, IChunkLoader chunkLoaderIn, IChunkGenerator chunkGeneratorIn)
      {
-@@ -83,6 +85,10 @@
+@@ -83,6 +86,10 @@
          return chunk;
      }
  
@@ -38,7 +39,7 @@
      @Nullable
      public Chunk loadChunk(int x, int z)
      {
-@@ -92,6 +98,11 @@
+@@ -92,6 +99,11 @@
      @Nullable
      public Chunk loadChunk(int x, int z, @Nullable Runnable runnable)
      {
@@ -50,7 +51,7 @@
          Chunk chunk = this.getLoadedChunk(x, z);
          if (chunk == null)
          {
-@@ -106,7 +117,7 @@
+@@ -106,7 +118,7 @@
                  {
                  this.id2ChunkMap.put(ChunkPos.asLong(x, z), chunk);
                  chunk.onLoad();
@@ -59,7 +60,7 @@
                  }
  
                  loadingChunks.remove(pos);
-@@ -123,6 +134,8 @@
+@@ -123,6 +135,8 @@
                      return null;
                  }
              }
@@ -68,7 +69,7 @@
          }
  
          // If we didn't load the chunk async and have a callback run it now
-@@ -154,7 +167,7 @@
+@@ -154,7 +168,7 @@
  
              this.id2ChunkMap.put(i, chunk);
              chunk.onLoad();
@@ -77,7 +78,31 @@
          }
  
          return chunk;
-@@ -196,7 +209,7 @@
+@@ -177,7 +191,11 @@
+         }
+         catch (Exception exception)
+         {
+-            LOGGER.error("Couldn't load chunk", (Throwable)exception);
++            // Paper start
++            String msg = "Couldn\'t load chunk";
++            ChunkProviderServer.LOGGER.error(msg, exception);
++            ServerInternalException.reportInternalException(exception);
++            // Paper end
+             return null;
+         }
+     }
+@@ -190,24 +208,33 @@
+         }
+         catch (Exception exception)
+         {
+-            LOGGER.error("Couldn't save entities", (Throwable)exception);
++            // Paper start
++            String msg = "Couldn\'t save entities";
++            ChunkProviderServer.LOGGER.error(msg, exception);
++            ServerInternalException.reportInternalException(exception);
++            // Paper end
+         }
+     }
  
      private void saveChunkData(Chunk chunkIn)
      {
@@ -86,7 +111,25 @@
          {
              chunkIn.setLastSaveTime(this.world.getTotalWorldTime());
              this.chunkLoader.saveChunk(this.world, chunkIn);
-@@ -266,17 +279,21 @@
+         }
+         catch (IOException ioexception)
+         {
+-            LOGGER.error("Couldn't save chunk", (Throwable)ioexception);
++            // Paper start
++            String msg = "Couldn\'t save chunk";
++            ChunkProviderServer.LOGGER.error(msg, ioexception);
++            ServerInternalException.reportInternalException(ioexception);
+         }
+         catch (MinecraftException minecraftexception)
+         {
+-            LOGGER.error("Couldn't save chunk; already in use by another instance of Minecraft?", (Throwable)minecraftexception);
++            String msg = "Couldn\'t save chunk; already in use by another instance of Minecraft?";
++            ChunkProviderServer.LOGGER.error(msg, minecraftexception);
++            ServerInternalException.reportInternalException(minecraftexception);
+         }
+     }
+ 
+@@ -266,17 +293,21 @@
  
                      if (chunk != null && chunk.unloadQueued)
                      {
@@ -114,7 +157,7 @@
  
              this.chunkLoader.chunkTick();
          }
-@@ -284,6 +301,39 @@
+@@ -284,6 +315,40 @@
          return false;
      }
  
@@ -126,6 +169,7 @@
 +            return false;
 +        }
 +        save = event.isSaveChunk();
++        chunk.lightingQueue.processUnload(); // Paper
 +
 +        // Update neighbor counts
 +        for (int x = -2; x < 3; x++) {
@@ -154,3 +198,9 @@
      public boolean canSave()
      {
          return !this.world.disableLevelSaving;
+@@ -324,4 +389,5 @@
+     {
+         return this.id2ChunkMap.containsKey(ChunkPos.asLong(x, z)) || this.chunkLoader.isChunkGeneratedAt(x, z);
+     }
++
+ }

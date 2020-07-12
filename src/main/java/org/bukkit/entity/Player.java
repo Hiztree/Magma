@@ -1769,6 +1769,19 @@ public interface Player extends HumanEntity, Conversable, CommandSender, Offline
      */
     public String getLocale();
 
+    /**
+     * Get whether the player can affect mob spawning
+     *
+     * @return if the player can affect mob spawning
+     */
+    public boolean getAffectsSpawning();
+    /**
+     * Set whether the player can affect mob spawning
+     *
+     * @param affects Whether the player can affect mob spawning
+     */
+    public void setAffectsSpawning(boolean affects);
+
     @Override
     Spigot spigot();
 

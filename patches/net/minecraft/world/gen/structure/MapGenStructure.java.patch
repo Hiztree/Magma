@@ -32,7 +32,15 @@
  
          return flag;
      }
-@@ -175,8 +180,13 @@
+@@ -152,6 +157,7 @@
+ 
+     public boolean isPositionInStructure(World worldIn, BlockPos pos)
+     {
++        if (this.world == null) return false; // Paper
+         this.initializeStructureData(worldIn);
+         ObjectIterator objectiterator = this.structureMap.values().iterator();
+ 
+@@ -175,8 +181,13 @@
      {
          if (this.structureData == null && worldIn != null)
          {

@@ -1,9 +1,10 @@
 --- ../src-base/minecraft/net/minecraft/server/MinecraftServer.java
 +++ ../src-work/minecraft/net/minecraft/server/MinecraftServer.java
-@@ -1,7 +1,9 @@
+@@ -1,7 +1,10 @@
  package net.minecraft.server;
  
 +import co.aikar.timings.MinecraftTimings;
++import com.destroystokyo.paper.PaperLightingQueue;
 +import com.destroystokyo.paper.utils.CachedSizeConcurrentLinkedQueue;
  import com.google.common.collect.Lists;
 -import com.google.common.collect.Queues;
@@ -11,7 +12,7 @@
  import com.google.common.util.concurrent.Futures;
  import com.google.common.util.concurrent.ListenableFuture;
  import com.google.common.util.concurrent.ListenableFutureTask;
-@@ -15,52 +17,68 @@
+@@ -15,52 +18,68 @@
  import io.netty.handler.codec.base64.Base64;
  import java.awt.GraphicsEnvironment;
  import java.awt.image.BufferedImage;
@@ -81,7 +82,7 @@
  import net.minecraft.util.Util;
  import net.minecraft.util.datafix.DataFixer;
  import net.minecraft.util.datafix.DataFixesManager;
-@@ -73,35 +91,66 @@
+@@ -73,35 +92,67 @@
  import net.minecraft.world.MinecraftException;
  import net.minecraft.world.ServerWorldEventHandler;
  import net.minecraft.world.World;
@@ -130,6 +131,7 @@
 +import org.magmafoundation.magma.configuration.value.values.BooleanValue;
 +import org.magmafoundation.magma.patcher.PatcherManager;
 +import org.spigotmc.SlackActivityAccountant;
++import org.spigotmc.WatchdogThread;
  
 -public abstract class MinecraftServer implements ICommandSender, Runnable, IThreadListener, ISnooperInfo
 -{
@@ -156,7 +158,7 @@
      @SideOnly(Side.SERVER)
      private String hostname;
      private int serverPort = -1;
-@@ -128,7 +177,6 @@
+@@ -128,7 +179,6 @@
      private KeyPair serverKeyPair;
      private String serverOwner;
      private String folderName;
@@ -164,7 +166,7 @@
      private String worldName;
      private boolean isDemo;
      private boolean enableBonusChest;
-@@ -144,178 +192,302 @@
+@@ -144,178 +194,302 @@
      private final GameProfileRepository profileRepo;
      private final PlayerProfileCache profileCache;
      private long nanoTimeSinceStatusRefresh;
@@ -181,7 +183,7 @@
 +    public org.bukkit.command.ConsoleCommandSender console;
 +    public org.bukkit.command.RemoteConsoleCommandSender remoteConsole;
 +    public ConsoleReader reader;
-+    public static int currentTick = (int) (System.currentTimeMillis() / 50);
++    public static int currentTick = 0; // Paper - Further improve tick loop
 +    public Thread primaryThread;
 +    public Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 +    public int autosavePeriod;
@@ -564,7 +566,7 @@
          int i = 16;
          int j = 4;
          int k = 192;
-@@ -323,45 +495,43 @@
+@@ -323,45 +497,43 @@
          int i1 = 0;
          this.setUserMessage("menu.generatingTerrain");
          int j1 = 0;
@@ -634,7 +636,7 @@
          }
      }
  
-@@ -379,73 +549,80 @@
+@@ -379,73 +551,80 @@
  
      public abstract boolean shouldBroadcastConsoleToOps();
  
@@ -747,7 +749,7 @@
              {
                  if (worldserver1 != null)
                  {
-@@ -453,159 +630,214 @@
+@@ -453,159 +632,216 @@
                      worldserver1.flush();
                  }
              }
@@ -789,7 +791,8 @@
          this.serverRunning = false;
      }
  
-+    public static double currentTPS;
++    public static double currentTPS; // Magma
++    // Paper start - Further improve server tick loop
 +    public static final int TPS = 20;
 +    private static final long SEC_IN_NANO = 1000000000;
 +    public static final long TICK_TIME = SEC_IN_NANO / TPS;
@@ -798,7 +801,7 @@
 +    public final RollingAverage tps1 = new RollingAverage(60);
 +    public final RollingAverage tps5 = new RollingAverage(60 * 5);
 +    public final RollingAverage tps15 = new RollingAverage(60 * 15);
-+    public double[] recentTps = new double[3];
++    public double[] recentTps = new double[3]; // Paper - Fine have your darn compat with bad plugins
 +
 +    public static class RollingAverage {
 +        private final int size;
@@ -853,7 +856,7 @@
  
 +                // Spigot start
 +                Arrays.fill( recentTps, 20 );
-+                long start = System.nanoTime(), lastTick = start - TICK_TIME, catchupTime = 0, curTime, wait, tickSection = start;
++                long start = System.nanoTime(), lastTick = start - TICK_TIME, catchupTime = 0, curTime, wait, tickSection = start; // Paper - Further improve server tick loop
                  while (this.serverRunning)
                  {
 -                    long k = getCurrentTimeMillis();
@@ -865,6 +868,7 @@
 -                        j = 2000L;
 -                        this.timeOfLastWarning = this.currentTime;
 +                    curTime = System.nanoTime();
++                    // Paper start - Further improve server tick loop
 +                    wait = TICK_TIME - (curTime - lastTick);
 +                    if (wait > 0) {
 +                        if (catchupTime < 2E6) {
@@ -1035,7 +1039,7 @@
                  BufferedImage bufferedimage = ImageIO.read(file1);
                  Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide");
                  Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high");
-@@ -613,52 +845,44 @@
+@@ -613,52 +849,44 @@
                  ByteBuf bytebuf1 = Base64.encode(bytebuf);
                  response.setFavicon("data:image/png;base64," + bytebuf1.toString(StandardCharsets.UTF_8));
                  bytebuf1.release(); // Forge: fix MC-122085
@@ -1087,8 +1091,9 @@
  
      public void tick()
      {
-         long i = System.nanoTime();
+-        long i = System.nanoTime();
 -        net.minecraftforge.fml.common.FMLCommonHandler.instance().onPreServerTick();
++        long i = System.nanoTime(); long startTime = i; // Paper
 +        co.aikar.timings.TimingsManager.FULL_SERVER_TICK.startTiming(); // Paper
 +        this.slackActivityAccountant.tickStarted(); // Spigot
 +        FMLCommonHandler.instance().onPreServerTick();
@@ -1100,7 +1105,7 @@
              this.startProfiling = false;
              this.profiler.profilingEnabled = true;
              this.profiler.clearProfiling();
-@@ -667,16 +891,15 @@
+@@ -667,16 +895,15 @@
          this.profiler.startSection("root");
          this.updateTimeLightAndEntities();
  
@@ -1122,7 +1127,7 @@
              }
  
              Collections.shuffle(Arrays.asList(agameprofile));
-@@ -684,7 +907,7 @@
+@@ -684,7 +911,7 @@
              this.statusResponse.invalidateJson();
          }
  
@@ -1131,7 +1136,7 @@
          {
              this.profiler.startSection("save");
              this.playerList.saveAllPlayerData();
-@@ -693,134 +916,163 @@
+@@ -693,134 +920,165 @@
          }
  
          this.profiler.startSection("tallying");
@@ -1158,6 +1163,8 @@
          this.profiler.endSection();
          this.profiler.endSection();
 -        net.minecraftforge.fml.common.FMLCommonHandler.instance().onPostServerTick();
++        WatchdogThread.tick(); // Spigot
++        PaperLightingQueue.processQueue(startTime); // Paper
 +        this.slackActivityAccountant.tickEnded(ticksNanos);
 +        FMLCommonHandler.instance().onPostServerTick();
 +        co.aikar.timings.TimingsManager.FULL_SERVER_TICK.stopTiming(); // Paper
@@ -1364,7 +1371,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1087,51 @@
+@@ -835,53 +1093,51 @@
          return ret;
      }
  
@@ -1442,7 +1449,7 @@
                  }
              });
          }
-@@ -889,145 +1139,115 @@
+@@ -889,145 +1145,115 @@
          return report;
      }
  
@@ -1632,7 +1639,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1255,75 @@
+@@ -1035,80 +1261,75 @@
          }
      }
  
@@ -1742,7 +1749,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1332,193 @@
+@@ -1117,228 +1338,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2025,7 +2032,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1527,254 @@
+@@ -1347,316 +1533,254 @@
          return null;
      }
  
