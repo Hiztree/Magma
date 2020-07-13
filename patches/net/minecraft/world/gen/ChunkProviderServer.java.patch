@@ -217,7 +217,36 @@
                      return false;
                  }
              }
-@@ -266,24 +347,77 @@
+@@ -246,12 +327,19 @@
+         this.chunkLoader.flush();
+     }
+ 
++    private static final double UNLOAD_QUEUE_RESIZE_FACTOR = 0.96;
+     public boolean tick()
+     {
+         if (!this.world.disableLevelSaving)
+         {
+             if (!this.droppedChunksSet.isEmpty())
+             {
++                // Spigot start
++                org.spigotmc.SlackActivityAccountant activityAccountant = this.world.getMinecraftServer().slackActivityAccountant;
++                activityAccountant.startActivity(0.5);
++                int targetSize = Math.min(this.droppedChunksSet.size() - 100,  (int) (this.droppedChunksSet.size() * UNLOAD_QUEUE_RESIZE_FACTOR)); // Paper - Make more aggressive
++                // Spigot end
++
+                 for (ChunkPos forced : this.world.getPersistentChunks().keySet())
+                 {
+                     this.droppedChunksSet.remove(ChunkPos.asLong(forced.x, forced.z));
+@@ -259,31 +347,86 @@
+ 
+                 Iterator<Long> iterator = this.droppedChunksSet.iterator();
+ 
+-                for (int i = 0; i < 100 && iterator.hasNext(); iterator.remove())
+-                {
++                while (iterator.hasNext()) { // Spigot
+                     Long olong = iterator.next();
++                    iterator.remove(); // Spigot
+                     Chunk chunk = (Chunk)this.id2ChunkMap.get(olong);
  
                      if (chunk != null && chunk.unloadQueued)
                      {
@@ -226,23 +255,25 @@
 -                        this.saveChunkData(chunk);
 -                        this.saveChunkExtraData(chunk);
 -                        this.id2ChunkMap.remove(olong);
-+//                        chunk.onUnload();
-+//                        net.minecraftforge.common.ForgeChunkManager.putDormantChunk(ChunkPos.asLong(chunk.x, chunk.z), chunk);
-+//                        this.saveChunkData(chunk);
-+//                        this.saveChunkExtraData(chunk);
-+//                        this.id2ChunkMap.remove(olong);
+-                        ++i;
++                        // CraftBukkit start - move unload logic to own method
 +                        chunk.setShouldUnload(false); // Paper
 +                        if (!unloadChunk(chunk, true)) {
 +                            continue;
 +                        }
-                         ++i;
++                        // CraftBukkit end
++
++                        // Spigot start
++                        if (this.id2ChunkMap.size() <= targetSize && activityAccountant.activityTimeIsExhausted()) {
++                            break;
++                        }
++                        // Spigot end
                      }
                  }
++                activityAccountant.endActivity(); // Spigot
              }
  
--            if (this.id2ChunkMap.isEmpty()) net.minecraftforge.common.DimensionManager.unloadWorld(this.world.provider.getDimension());
-+            // Magma - Stops forge automatically unloading world on startup.
-+//            if (this.id2ChunkMap.isEmpty()) net.minecraftforge.common.DimensionManager.unloadWorld(this.world.provider.getDimension());
+             if (this.id2ChunkMap.isEmpty()) net.minecraftforge.common.DimensionManager.unloadWorld(this.world.provider.getDimension());
  
 +            // Paper start - delayed chunk unloads
 +            long now = System.currentTimeMillis();
@@ -301,7 +332,7 @@
      public boolean canSave()
      {
          return !this.world.disableLevelSaving;
-@@ -324,4 +458,5 @@
+@@ -324,4 +467,5 @@
      {
          return this.id2ChunkMap.containsKey(ChunkPos.asLong(x, z)) || this.chunkLoader.isChunkGeneratedAt(x, z);
      }

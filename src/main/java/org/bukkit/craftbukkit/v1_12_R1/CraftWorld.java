@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.v1_12_R1;
 
+import com.destroystokyo.paper.MCUtil;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.util.ArrayList;
@@ -305,30 +306,30 @@ public class CraftWorld implements World {
         }
     }
 
-    // TODO: 12/07/2020 Magma Comeback
-    @Override
+    // Paper start - Provide fast information methods
     public int getEntityCount() {
-        return 0;
+        return world.loadedEntityList.size();
     }
-
-    @Override
     public int getTileEntityCount() {
-        return 0;
-    }
 
-    @Override
+        // We don't use the full world tile entity list, so we must iterate chunks
+        int size = 0;
+        for (net.minecraft.world.chunk.Chunk chunk : ((ChunkProviderServer) world.getChunkProvider()).id2ChunkMap.values()) {
+            size += chunk.tileEntities.size();
+
+        }
+        return size;
+    }
     public int getTickableTileEntityCount() {
-        return 0;
-    }
 
-    @Override
+        return world.tickableTileEntities.size();
+    }
     public int getChunkCount() {
-        return 0;
-    }
+        return world.getChunkProvider().id2ChunkMap.size();
 
-    @Override
+    }
     public int getPlayerCount() {
-        return 0;
+        return world.playerEntities.size();
     }
 
     public Block getBlockAt(int x, int y, int z) {
@@ -465,6 +466,7 @@ public class CraftWorld implements World {
     }
 
     private boolean unloadChunk0(int x, int z, boolean save) {
+        Boolean result = MCUtil.ensureMain("Unload Chunk", () -> { // Paper - Ensure never async
         net.minecraft.world.chunk.Chunk chunk = world.getChunkProvider().getChunkIfLoaded(x, z);
         if (chunk == null) {
             return true;
@@ -472,6 +474,7 @@ public class CraftWorld implements World {
 
         // If chunk had previously been queued to save, must do save to avoid loss of that data
         return world.getChunkProvider().unloadChunk(chunk, chunk.mustSave || save);
+        }); return result != null ? result : false; // Paper - Ensure never async
     }
 
     public boolean regenerateChunk(int x, int z) {
@@ -1446,7 +1449,7 @@ public class CraftWorld implements World {
         } else if (TNTPrimed.class.isAssignableFrom(clazz)) {
             entity = new EntityTNTPrimed(world, x, y, z, null);
         } else if (ExperienceOrb.class.isAssignableFrom(clazz)) {
-            entity = new EntityXPOrb(world, x, y, z, 0);
+            entity = new EntityXPOrb(world, x, y, z, 0, org.bukkit.entity.ExperienceOrb.SpawnReason.CUSTOM, null, null); // Paper
         } else if (Weather.class.isAssignableFrom(clazz)) {
             // not sure what this can do
             if (LightningStrike.class.isAssignableFrom(clazz)) {

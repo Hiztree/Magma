@@ -131,8 +131,10 @@
 -            int k = 49;
 -            Iterator<PlayerChunkMapEntry> iterator = this.entriesWithoutChunks.iterator();
 +            try (Timing ignored = world.timings.doChunkMapPlayersNeedingChunks.startTiming()) { // Paper
-+                long l = System.nanoTime() + 25000000L;
-+                int k = 49;
++                // Spigot start
++                org.spigotmc.SlackActivityAccountant activityAccountant = this.world.getMinecraftServer().slackActivityAccountant;
++                activityAccountant.startActivity(0.5);
++                // Spigot end
 +                Iterator<PlayerChunkMapEntry> iterator = this.entriesWithoutChunks.iterator();
  
 -            while (iterator.hasNext())
@@ -167,10 +169,7 @@
 -                        if (k < 0 || System.nanoTime() > l)
 -                        {
 -                            break;
-+                            --k;
-+
-+                            if (k < 0 || System.nanoTime() > l)
-+                            {
++                            if (activityAccountant.activityTimeIsExhausted()) { // Spigot
 +                                break;
 +                            }
                          }
@@ -180,6 +179,7 @@
                      }
                  }
 -            }
++                activityAccountant.endActivity(); // Spigot
 +            } // Paper timing
          }
  

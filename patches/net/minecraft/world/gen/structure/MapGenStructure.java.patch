@@ -55,3 +55,12 @@
              if (this.structureData == null)
              {
                  this.structureData = new MapGenStructureData(this.getStructureName());
+@@ -272,6 +283,8 @@
+                         MapGenBase.setupChunkSeed(worldIn.getSeed(), random, l1, i2);
+                         random.nextInt();
+ 
++                        if (!worldIn.getWorldBorder().isChunkInBounds(l1, i2)) { continue; } // Paper
++
+                         if (p_191069_1_.canSpawnStructureAtCoords(l1, i2))
+                         {
+                             if (!findUnexplored || !worldIn.isChunkGeneratedAt(l1, i2))

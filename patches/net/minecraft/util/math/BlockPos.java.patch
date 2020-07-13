@@ -1,6 +1,51 @@
 --- ../src-base/minecraft/net/minecraft/util/math/BlockPos.java
 +++ ../src-work/minecraft/net/minecraft/util/math/BlockPos.java
-@@ -294,6 +294,16 @@
+@@ -259,27 +259,29 @@
+                             this.pos = new BlockPos.MutableBlockPos(x1, y1, z1);
+                             return this.pos;
+                         }
+-                        else if (this.pos.x == x2 && this.pos.y == y2 && this.pos.z == z2)
++                        // Paper start - Speedup BlockPos by fixing inlining
++                        else if (((Vec3i)this.pos).x == x2 && ((Vec3i)this.pos).y == y2 && ((Vec3i)this.pos).z == z2)
+                         {
+                             return (BlockPos.MutableBlockPos)this.endOfData();
+                         }
+                         else
+                         {
+-                            if (this.pos.x < x2)
++                            if (((Vec3i)this.pos).x < x2)
+                             {
+-                                ++this.pos.x;
++                                ++((Vec3i)this.pos).x;
+                             }
+-                            else if (this.pos.y < y2)
++                            else if (((Vec3i)this.pos).y < y2)
+                             {
+-                                this.pos.x = x1;
+-                                ++this.pos.y;
++                                ((Vec3i)this.pos).x = x1;
++                                ++((Vec3i)this.pos).y;
+                             }
+-                            else if (this.pos.z < z2)
++                            else if (((Vec3i)this.pos).z < z2)
+                             {
+-                                this.pos.x = x1;
+-                                this.pos.y = y1;
+-                                ++this.pos.z;
++                                ((Vec3i)this.pos).x = x1;
++                                ((Vec3i)this.pos).y = y1;
++                                ++((Vec3i)this.pos).z;
+                             }
++                            // Paper end
+ 
+                             return this.pos;
+                         }
+@@ -291,9 +293,22 @@
+ 
+     public static class MutableBlockPos extends BlockPos
+         {
++            // Paper start - Remove variables
++            /*
              protected int x;
              protected int y;
              protected int z;
@@ -13,11 +58,71 @@
 +            public boolean isInvalidYLocation() {
 +                return y < 0 || y >= 256;
 +            }
++             */
 +            // Paper end
  
              public MutableBlockPos()
              {
-@@ -403,6 +413,7 @@
+@@ -308,9 +323,11 @@
+             public MutableBlockPos(int x_, int y_, int z_)
+             {
+                 super(0, 0, 0);
+-                this.x = x_;
+-                this.y = y_;
+-                this.z = z_;
++                // Paper start - Modify base position variables
++                ((Vec3i) this).x = x_;
++                ((Vec3i) this).y = y_;
++                ((Vec3i) this).z = z_;
++                // Paper end
+             }
+ 
+             public BlockPos add(double x, double y, double z)
+@@ -333,6 +350,8 @@
+                 return super.rotate(rotationIn).toImmutable();
+             }
+ 
++            // Paper start - Use superclass methods
++             /*
+             public int getX()
+             {
+                 return this.x;
+@@ -347,12 +366,15 @@
+             {
+                 return this.z;
+             }
+-
++            */
++            // Paper end
+             public BlockPos.MutableBlockPos setPos(int xIn, int yIn, int zIn)
+             {
+-                this.x = xIn;
+-                this.y = yIn;
+-                this.z = zIn;
++                // Paper start - Modify base position variables
++                ((Vec3i) this).x = xIn;
++                ((Vec3i) this).y = yIn;
++                ((Vec3i) this).z = zIn;
++                // Paper end
+                 return this;
+             }
+ 
+@@ -379,12 +401,12 @@
+ 
+             public BlockPos.MutableBlockPos move(EnumFacing facing, int n)
+             {
+-                return this.setPos(this.x + facing.getFrontOffsetX() * n, this.y + facing.getFrontOffsetY() * n, this.z + facing.getFrontOffsetZ() * n);
++                return this.setPos(this.getX() + facing.getFrontOffsetX() * n, this.getY() + facing.getFrontOffsetY() * n, this.getZ() + facing.getFrontOffsetZ() * n);  // Paper - USE THE BLEEPING GETTERS
+             }
+ 
+             public void setY(int yIn)
+             {
+-                this.y = yIn;
++                ((Vec3i) this).y = yIn; // Paper - Modify base variable
+             }
+ 
+             public BlockPos toImmutable()
+@@ -403,6 +425,7 @@
                  super(xIn, yIn, zIn);
              }
  
@@ -25,7 +130,7 @@
              public static BlockPos.PooledMutableBlockPos retain()
              {
                  return retain(0, 0, 0);
-@@ -439,6 +450,7 @@
+@@ -439,6 +462,7 @@
                  return new BlockPos.PooledMutableBlockPos(xIn, yIn, zIn);
              }
  
@@ -33,7 +138,7 @@
              public void release()
              {
                  synchronized (POOL)
-@@ -463,6 +475,8 @@
+@@ -463,6 +487,8 @@
                  return (BlockPos.PooledMutableBlockPos)super.setPos(xIn, yIn, zIn);
              }
  

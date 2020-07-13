@@ -1,6 +1,8 @@
 package org.bukkit.craftbukkit.v1_12_R1.entity;
 
 import java.util.UUID;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -72,14 +74,14 @@ public class CraftFirework extends CraftEntity implements Firework {
         getHandle().lifetime = 0;
     }
 
-    // TODO: 12/07/2020 Magma Comeback
     @Override
     public UUID getSpawningEntity() {
-        return null;
+        return getHandle().spawningEntity;
     }
 
     @Override
     public LivingEntity getBoostedEntity() {
-        return null;
+        EntityLivingBase boostedEntity = getHandle().getBoostedEntity();
+        return boostedEntity != null ? (LivingEntity) boostedEntity.getBukkitEntity() : null;
     }
 }

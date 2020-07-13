@@ -21,23 +21,17 @@ public class CraftExperienceOrb extends CraftEntity implements ExperienceOrb {
         getHandle().xpValue = value;
     }
 
-    // TODO: 12/07/2020 Magma Comeback
-    @Nullable
-    @Override
-    public UUID getTriggerEntityId() {
-        return null;
+    // Paper start
+    public java.util.UUID getTriggerEntityId() {
+        return getHandle().triggerEntityId;
     }
-
-    @Nullable
-    @Override
-    public UUID getSourceEntityId() {
-        return null;
+    public java.util.UUID getSourceEntityId() {
+        return getHandle().sourceEntityId;
     }
-
-    @Override
     public SpawnReason getSpawnReason() {
-        return null;
+        return getHandle().spawnReason;
     }
+    // Paper end
 
     @Override
     public EntityXPOrb getHandle() {

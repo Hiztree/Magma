@@ -14,6 +14,7 @@ import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntityAnimal;
+import net.minecraft.entity.passive.EntityLlama;
 import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
@@ -207,18 +208,30 @@ public class ActivationRange
         if ( entity instanceof EntityLiving)
         {
             EntityLiving living = (EntityLiving) entity;
-            if ( /*TODO: Missed mapping? living.attackTicks > 0 || */ living.hurtTime> 0 || living.activePotionsMap.size() > 0 )
+            if ( living.recentlyHit > 0 || living.hurtTime > 0 || living.activePotionsMap.size() > 0 ) // Paper
             {
                 return true;
             }
-            if ( entity instanceof EntityCreature && ( (EntityCreature) entity ).getAttackTarget() != null )
+//            if ( entity instanceof EntityCreature && ( (EntityCreature) entity ).getAttackTarget() != null )
+            if ( entity instanceof EntityCreature )
             {
-                return true;
+                // Paper start
+                EntityCreature creature = (EntityCreature) entity;
+                if (creature.getAttackTarget() != null || creature.getMovingTarget() != null) {
+                    return true;
+                }
+                // Paper end
             }
             if ( entity instanceof EntityVillager && ( (EntityVillager) entity ).isMating() )
             {
                 return true;
             }
+            // Paper start
+            if ( entity instanceof EntityLlama && ( (EntityLlama ) entity ).inCaravan() )
+            {
+                return true;
+            }
+            // Paper end
             if ( entity instanceof EntityAnimal)
             {
                 EntityAnimal animal = (EntityAnimal) entity;
@@ -248,7 +261,7 @@ public class ActivationRange
     {
         // Never safe to skip fireworks or entities not yet added to chunk
         // PAIL: inChunk - boolean under datawatchers
-        if ( !entity.addedToChunk || entity instanceof EntityFireworkRocket ) {
+        if ( !entity.isAddedToChunk() || entity instanceof EntityFireworkRocket ) { // Paper (use obf helper)
             return true;
         }
 
@@ -272,10 +285,10 @@ public class ActivationRange
         {
             isActive = false;
         }
-        int x = MathHelper.floor( entity.posX );
-        int z = MathHelper.floor( entity.posZ );
+        // int x = MathHelper.floor( entity.posX ); // Paper
+        // int z = MathHelper.floor( entity.posZ ); // Paper
         // Make sure not on edge of unloaded chunk
-        Chunk chunk = entity.world.getChunkIfLoaded( x >> 4, z >> 4 );
+        Chunk chunk = entity.getChunkAtLocation(); // Paper
         if ( isActive && !( chunk != null ) )
         {
             isActive = false;

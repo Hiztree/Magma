@@ -1963,10 +1963,23 @@ public final class CraftServer implements Server {
         CraftDefaultPermissions.registerCorePermissions();
     }
 
-    // TODO: 12/07/2020 Magma Comeback
     @Override
     public boolean reloadCommandAliases() {
-        return false;
+        Set<String> removals = getCommandAliases().keySet().stream()
+            .map(key -> key.toLowerCase(java.util.Locale.ENGLISH))
+            .collect(java.util.stream.Collectors.toSet());
+        getCommandMap().getKnownCommands().keySet().removeIf(removals::contains);
+        File file = getCommandsConfigFile();
+        try {
+            commandsConfiguration.load(file);
+        } catch (FileNotFoundException ex) {
+            return false;
+        } catch (IOException | org.bukkit.configuration.InvalidConfigurationException ex) {
+            Bukkit.getLogger().log(Level.SEVERE, "Cannot load " + file, ex);
+            return false;
+        }
+        commandMap.registerServerAliases();
+        return true;
     }
     // Paper end
 }

@@ -32,7 +32,15 @@
      protected World world;
      @Nullable
      protected Path currentPath;
-@@ -99,6 +110,7 @@
+@@ -89,6 +100,7 @@
+     @Nullable
+     public Path getPathToPos(BlockPos pos)
+     {
++        if (!getEntity().getEntityWorld().getWorldBorder().isInBounds(pos)) return null; // Paper - don't path out of world border
+         if (!this.canNavigate())
+         {
+             return null;
+@@ -99,6 +111,7 @@
          }
          else
          {
@@ -40,7 +48,15 @@
              this.targetPos = pos;
              float f = this.getPathSearchRange();
              this.world.profiler.startSection("pathfind");
-@@ -128,6 +140,7 @@
+@@ -121,6 +134,7 @@
+         else
+         {
+             BlockPos blockpos = new BlockPos(entityIn);
++            if (!getEntity().getEntityWorld().getWorldBorder().isInBounds(blockpos)) return null; // Paper - don't path out of world border
+ 
+             if (this.currentPath != null && !this.currentPath.isFinished() && blockpos.equals(this.targetPos))
+             {
+@@ -128,6 +142,7 @@
              }
              else
              {
@@ -48,7 +64,7 @@
                  this.targetPos = blockpos;
                  float f = this.getPathSearchRange();
                  this.world.profiler.startSection("pathfind");
-@@ -148,9 +161,24 @@
+@@ -148,9 +163,24 @@
  
      public boolean tryMoveToEntityLiving(Entity entityIn, double speedIn)
      {
@@ -74,7 +90,7 @@
  
      public boolean setPath(@Nullable Path pathentityIn, double speedIn)
      {
-@@ -317,6 +345,7 @@
+@@ -317,6 +347,7 @@
  
      public void clearPath()
      {

@@ -36,7 +36,23 @@
                  {
                      this.ignoreEntity = entity1;
                      flag = true;
-@@ -247,6 +249,9 @@
+@@ -238,6 +240,15 @@
+             raytraceresult = new RayTraceResult(entity);
+         }
+ 
++        // Paper start - Call ProjectileCollideEvent
++        if (raytraceresult != null && raytraceresult.entityHit != null) {
++            com.destroystokyo.paper.event.entity.ProjectileCollideEvent event = org.bukkit.craftbukkit.v1_12_R1.event.CraftEventFactory.callProjectileCollideEvent(this, raytraceresult);
++            if (event.isCancelled()) {
++                raytraceresult = null;
++            }
++        }
++        // Paper end
++
+         if (raytraceresult != null)
+         {
+             if (raytraceresult.typeOfHit == RayTraceResult.Type.BLOCK && this.world.getBlockState(raytraceresult.getBlockPos()).getBlock() == Blocks.PORTAL)
+@@ -247,6 +258,9 @@
              else if (!net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult))
              {
                  this.onImpact(raytraceresult);

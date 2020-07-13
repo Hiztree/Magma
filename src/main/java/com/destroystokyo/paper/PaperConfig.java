@@ -261,4 +261,13 @@ public class PaperConfig {
         }
     }
 
+    public static boolean removeInvalidStatistics = false;
+    private static void removeInvalidStatistics() {
+        if (version < 12) {
+            boolean oldValue = getBoolean("remove-invalid-statistics", false);
+            set("settings.remove-invalid-statistics", oldValue);
+        }
+        removeInvalidStatistics = getBoolean("settings.remove-invalid-statistics", false);
+    }
+
 }
