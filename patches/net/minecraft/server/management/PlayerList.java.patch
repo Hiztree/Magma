@@ -1096,16 +1096,23 @@
          playerIn.connection.sendPacket(new SPacketHeldItemChange(playerIn.inventory.currentItem));
      }
  
-@@ -1079,17 +1671,35 @@
+@@ -1077,19 +1669,43 @@
+         this.commandsAllowedForAll = p_72387_1_;
+     }
  
++    // Paper start - Extract method to allow for restarting flag
      public void removeAllPlayers()
      {
 -        for (int i = 0; i < this.playerEntityList.size(); ++i)
 -        {
 -            (this.playerEntityList.get(i)).connection.disconnect(new TextComponentTranslation("multiplayer.disconnect.server_shutdown", new Object[0]));
++        removeAllPlayers(false);
++    }
++
++    public void removeAllPlayers(boolean isRestarting) {
 +        // CraftBukkit start - disconnect safely
 +        for (EntityPlayerMP player : this.playerEntityList) {
-+            player.connection.disconnect(this.mcServer.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
++            player.connection.disconnect(!isRestarting ? this.mcServer.server.getShutdownMessage() : org.spigotmc.SpigotConfig.restartMessage); // CraftBukkit - add custom shutdown message // Paper - add isRestarting flag
          }
 +
 +        // Paper start - Remove collideRule team if it exists
@@ -1117,6 +1124,7 @@
 +        // Paper end
 +
      }
++    // Paper end
  
 +    public void sendMessage(ITextComponent[] iChatBaseComponents) {
 +        for (ITextComponent component : iChatBaseComponents) {
@@ -1136,7 +1144,7 @@
      }
  
      public void sendMessage(ITextComponent component)
-@@ -1097,10 +1707,19 @@
+@@ -1097,10 +1713,19 @@
          this.sendMessage(component, true);
      }
  
@@ -1158,7 +1166,7 @@
  
          if (statisticsmanagerserver == null)
          {
-@@ -1119,7 +1738,7 @@
+@@ -1119,7 +1744,7 @@
  
              statisticsmanagerserver = new StatisticsManagerServer(this.mcServer, file2);
              statisticsmanagerserver.readStatFile();
@@ -1167,7 +1175,7 @@
          }
  
          return statisticsmanagerserver;
-@@ -1128,14 +1747,14 @@
+@@ -1128,14 +1753,14 @@
      public PlayerAdvancements getPlayerAdvancements(EntityPlayerMP p_192054_1_)
      {
          UUID uuid = p_192054_1_.getUniqueID();
@@ -1184,7 +1192,7 @@
          }
  
          playeradvancements.setPlayer(p_192054_1_);
-@@ -1148,7 +1767,7 @@
+@@ -1148,7 +1773,7 @@
  
          if (this.mcServer.worlds != null)
          {
@@ -1193,7 +1201,7 @@
              {
                  if (worldserver != null)
                  {
-@@ -1176,9 +1795,10 @@
+@@ -1176,9 +1801,10 @@
  
      public void reloadResources()
      {

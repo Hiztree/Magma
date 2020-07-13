@@ -84,7 +84,7 @@
  import net.minecraft.util.Util;
  import net.minecraft.util.datafix.DataFixer;
  import net.minecraft.util.datafix.DataFixesManager;
-@@ -73,35 +94,67 @@
+@@ -73,41 +94,74 @@
  import net.minecraft.world.MinecraftException;
  import net.minecraft.world.ServerWorldEventHandler;
  import net.minecraft.world.World;
@@ -160,7 +160,14 @@
      @SideOnly(Side.SERVER)
      private String hostname;
      private int serverPort = -1;
-@@ -128,7 +181,6 @@
+     public WorldServer[] worlds = new WorldServer[0];
+     private PlayerList playerList;
+     private boolean serverRunning = true;
++    private boolean isRestarting = false; // Paper - flag to signify we're attempting to restart
+     private boolean serverStopped;
+     private int tickCounter;
+     protected final Proxy serverProxy;
+@@ -128,7 +182,6 @@
      private KeyPair serverKeyPair;
      private String serverOwner;
      private String folderName;
@@ -168,7 +175,7 @@
      private String worldName;
      private boolean isDemo;
      private boolean enableBonusChest;
-@@ -144,178 +196,317 @@
+@@ -144,178 +197,317 @@
      private final GameProfileRepository profileRepo;
      private final PlayerProfileCache profileCache;
      private long nanoTimeSinceStatusRefresh;
@@ -583,7 +590,7 @@
          int i = 16;
          int j = 4;
          int k = 192;
-@@ -323,45 +514,46 @@
+@@ -323,45 +515,46 @@
          int i1 = 0;
          this.setUserMessage("menu.generatingTerrain");
          int j1 = 0;
@@ -656,7 +663,7 @@
          }
      }
  
-@@ -379,73 +571,80 @@
+@@ -379,73 +572,80 @@
  
      public abstract boolean shouldBroadcastConsoleToOps();
  
@@ -739,7 +746,8 @@
 +        if (this.playerList != null) {
              LOGGER.info("Saving players");
              this.playerList.saveAllPlayerData();
-             this.playerList.removeAllPlayers();
+-            this.playerList.removeAllPlayers();
++            this.playerList.removeAllPlayers(isRestarting);
 +            try {
 +                Thread.sleep(100);
 +            } catch (InterruptedException ex) {
@@ -769,7 +777,7 @@
              {
                  if (worldserver1 != null)
                  {
-@@ -453,159 +652,216 @@
+@@ -453,159 +653,222 @@
                      worldserver1.flush();
                  }
              }
@@ -807,9 +815,15 @@
  
 -    public void initiateShutdown()
 -    {
++    // Paper start - allow passing of the intent to restart
 +    public void initiateShutdown() {
++        safeShutdown(false);
++    }
++    public void safeShutdown(boolean isRestarting) {
          this.serverRunning = false;
++        this.isRestarting = isRestarting;
      }
++    // Paper end
  
 +    public static double currentTPS; // Magma
 +    // Paper start - Further improve server tick loop
@@ -1059,7 +1073,7 @@
                  BufferedImage bufferedimage = ImageIO.read(file1);
                  Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide");
                  Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high");
-@@ -613,52 +869,44 @@
+@@ -613,52 +876,44 @@
                  ByteBuf bytebuf1 = Base64.encode(bytebuf);
                  response.setFavicon("data:image/png;base64," + bytebuf1.toString(StandardCharsets.UTF_8));
                  bytebuf1.release(); // Forge: fix MC-122085
@@ -1125,7 +1139,7 @@
              this.startProfiling = false;
              this.profiler.profilingEnabled = true;
              this.profiler.clearProfiling();
-@@ -667,16 +915,15 @@
+@@ -667,16 +922,15 @@
          this.profiler.startSection("root");
          this.updateTimeLightAndEntities();
  
@@ -1147,7 +1161,7 @@
              }
  
              Collections.shuffle(Arrays.asList(agameprofile));
-@@ -684,143 +931,184 @@
+@@ -684,143 +938,184 @@
              this.statusResponse.invalidateJson();
          }
  
@@ -1407,7 +1421,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1123,51 @@
+@@ -835,53 +1130,51 @@
          return ret;
      }
  
@@ -1485,7 +1499,7 @@
                  }
              });
          }
-@@ -889,145 +1175,115 @@
+@@ -889,145 +1182,115 @@
          return report;
      }
  
@@ -1675,7 +1689,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1291,75 @@
+@@ -1035,80 +1298,75 @@
          }
      }
  
@@ -1785,7 +1799,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1368,193 @@
+@@ -1117,228 +1375,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2068,7 +2082,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1563,254 @@
+@@ -1347,316 +1570,254 @@
          return null;
      }
  

@@ -240,6 +240,11 @@ public final class CraftServer implements Server {
                 player.spigot().sendMessage(components);
             }
         }
+
+        @Override
+        public void restart() {
+            org.spigotmc.RestartCommand.restart();
+        }
     };
     public int chunkGCPeriod = -1;
     public int chunkGCLoadThresh = 0;
