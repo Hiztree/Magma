@@ -7,7 +7,7 @@ pipeline {
     environment {
         DISCORD_PREFIX = "Magma: ${BRANCH_NAME} #${BUILD_NUMBER}"
         CHANGES = getChanges(currentBuild)
-        ARTIFACT = " https://ci.hexeption.dev/job/Magma%20Foundation/job/Magma/job/${BRANCH_NAME}/${currentBuild.id}/artifact/projects/build/distributions/Magma-${GIT_COMMIT[0..6]}-server.jar"
+        ARTIFACT = " https://ci.hexeption.dev/job/Magma%20Foundation/job/Magma/job/feature%252Ffull-paper-support/${currentBuild.id}/artifact/build/distributions/Magma-${GIT_COMMIT[0..6]}-server.jar"
     }
     stages {
         stage('Setup') {
