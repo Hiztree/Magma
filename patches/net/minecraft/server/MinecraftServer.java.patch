@@ -1161,7 +1161,7 @@
              }
  
              Collections.shuffle(Arrays.asList(agameprofile));
-@@ -684,143 +938,184 @@
+@@ -684,143 +938,185 @@
              this.statusResponse.invalidateJson();
          }
  
@@ -1367,6 +1367,7 @@
  
          this.profiler.endStartSection("dim_unloading");
 -        net.minecraftforge.common.DimensionManager.unloadWorlds(worldTickTimes);
++        DimensionManager.unloadWorlds(worldTickTimes);
          this.profiler.endStartSection("connection");
 +        MinecraftTimings.connectionTimer.startTiming(); // Spigot
          this.getNetworkSystem().networkTick();
@@ -1421,7 +1422,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1130,51 @@
+@@ -835,53 +1131,51 @@
          return ret;
      }
  
@@ -1499,7 +1500,7 @@
                  }
              });
          }
-@@ -889,145 +1182,115 @@
+@@ -889,145 +1183,115 @@
          return report;
      }
  
@@ -1689,7 +1690,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1298,75 @@
+@@ -1035,80 +1299,75 @@
          }
      }
  
@@ -1799,7 +1800,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1375,193 @@
+@@ -1117,228 +1376,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2082,7 +2083,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1570,254 @@
+@@ -1347,316 +1571,254 @@
          return null;
      }
  

@@ -104,7 +104,7 @@
                      }
                  }
                  catch (IOException ioexception1)
-@@ -113,6 +133,27 @@
+@@ -113,6 +133,29 @@
                  }
              }
          };
@@ -125,14 +125,16 @@
 +        }
 +
 +        new Thread((Runnable)new TerminalConsoleWriterThread((OutputStream)System.out, this.reader)).start();
-+        System.setOut(new PrintStream(new LoggerOutputStream(logger, Level.INFO), true));
-+        System.setErr(new PrintStream(new LoggerOutputStream(logger, Level.WARN), true));
++        // Paper start - Use Log4j IOStreams
++        System.setOut(org.apache.logging.log4j.io.IoBuilder.forLogger(logger).setLevel(Level.INFO).buildPrintStream());
++        System.setErr(org.apache.logging.log4j.io.IoBuilder.forLogger(logger).setLevel(Level.WARN).buildPrintStream());
++        // Paper end
 +        // CraftBukkit end
 +
          thread.setDaemon(true);
          thread.start();
          LOGGER.info("Starting minecraft server version 1.12.2");
-@@ -125,7 +166,7 @@
+@@ -125,7 +168,7 @@
          net.minecraftforge.fml.common.FMLCommonHandler.instance().onServerStart(this);
  
          LOGGER.info("Loading properties");
@@ -141,7 +143,7 @@
          this.eula = new ServerEula(new File("eula.txt"));
  
          if (!this.eula.hasAcceptedEULA())
-@@ -144,7 +185,7 @@
+@@ -144,7 +187,7 @@
              {
                  this.setOnlineMode(this.settings.getBooleanProperty("online-mode", true));
                  this.setPreventProxyConnections(this.settings.getBooleanProperty("prevent-proxy-connections", false));
@@ -150,7 +152,7 @@
              }
  
              this.setCanSpawnAnimals(this.settings.getBooleanProperty("spawn-animals", true));
-@@ -180,11 +221,24 @@
+@@ -180,11 +223,24 @@
              {
                  this.setServerPort(this.settings.getIntProperty("server-port", 25565));
              }
@@ -175,7 +177,7 @@
              try
              {
                  this.getNetworkSystem().addLanEndpoint(inetaddress, this.getServerPort());
-@@ -196,13 +250,6 @@
+@@ -196,13 +252,6 @@
                  LOGGER.warn("Perhaps a server is already running on that port?");
                  return false;
              }
@@ -189,7 +191,7 @@
              }
  
              if (this.convertFiles())
-@@ -217,7 +264,7 @@
+@@ -217,7 +266,7 @@
              else
              {
                  net.minecraftforge.fml.common.FMLCommonHandler.instance().onServerStarted();
@@ -198,7 +200,7 @@
                  long j = System.nanoTime();
  
                  if (this.getFolderName() == null)
-@@ -254,6 +301,7 @@
+@@ -254,6 +303,7 @@
                      worldtype = WorldType.DEFAULT;
                  }
  
@@ -206,7 +208,7 @@
                  this.isCommandBlockEnabled();
                  this.getOpPermissionLevel();
                  this.isSnooperEnabled();
-@@ -271,8 +319,10 @@
+@@ -271,8 +321,10 @@
                  long i1 = System.nanoTime() - j;
                  String s3 = String.format("%.3fs", (double)i1 / 1.0E9D);
                  LOGGER.info("Done ({})! For help, type \"help\" or \"?\"", (Object)s3);
@@ -218,7 +220,7 @@
                  if (this.settings.hasProperty("announce-player-achievements"))
                  {
                      this.worlds[0].getGameRules().setOrCreateGameRule("announceAdvancements", this.settings.getBooleanProperty("announce-player-achievements", true) ? "true" : "false");
-@@ -287,21 +337,32 @@
+@@ -287,21 +339,32 @@
                      this.rconQueryThread.startThread();
                  }
  
@@ -259,7 +261,7 @@
                  Items.AIR.getSubItems(CreativeTabs.SEARCH, NonNullList.create());
                  // <3 you Grum for this, saves us ~30 patch files! --^
                  return net.minecraftforge.fml.common.FMLCommonHandler.instance().handleServerStarting(this);
-@@ -427,11 +488,20 @@
+@@ -427,11 +490,20 @@
  
      public void executePendingCommands()
      {
@@ -284,7 +286,7 @@
      }
  
      public boolean isDedicatedServer()
-@@ -684,13 +754,78 @@
+@@ -684,13 +756,78 @@
  
      public String getPlugins()
      {

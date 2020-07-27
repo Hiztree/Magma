@@ -152,6 +152,21 @@
       "name": "javassist:javassist:3.12.1.GA",
       "children" : ["sources"],
       "url" : "http://repo.maven.apache.org/maven2"
+    },
+    {
+      "name": "org.slf4j:slf4j-api:1.7.25",
+      "children" : ["sources"],
+      "url" : "http://repo.maven.apache.org/maven2"
+    },
+    {
+      "name": "org.apache.logging.log4j:log4j-iostreams:2.8.1",
+      "children" : ["sources"],
+      "url" : "http://repo.maven.apache.org/maven2"
+    },
+    {
+      "name": "org.apache.logging.log4j:log4j-slf4j-impl:2.8.1",
+      "children" : ["sources"],
+      "url" : "http://repo.maven.apache.org/maven2"
     }
   ]
 }

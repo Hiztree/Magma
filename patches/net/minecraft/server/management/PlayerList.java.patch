@@ -478,7 +478,7 @@
 +            // return s1;
 +            if (!userlistbansentry.hasBanExpired()) event.disallow(PlayerLoginEvent.Result.KICK_BANNED, s1); // Spigot
 +        }
-+        else if (!this.canJoin(profile, event)) // Paper
++        else if (!this.isWhitelisted(profile, event)) // Paper
 +        {
 +            // return "You are not white-listed on this server!";
 +            //event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!");
