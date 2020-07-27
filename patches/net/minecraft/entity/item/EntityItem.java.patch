@@ -17,11 +17,12 @@
  import net.minecraft.util.DamageSource;
  import net.minecraft.util.datafix.DataFixer;
  import net.minecraft.util.datafix.FixTypes;
-@@ -26,13 +29,29 @@
+@@ -26,13 +29,31 @@
  import net.minecraftforge.fml.relauncher.SideOnly;
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
 +import org.bukkit.event.entity.EntityPickupItemEvent;
++import org.bukkit.event.player.PlayerAttemptPickupItemEvent;
 +import org.bukkit.event.player.PlayerPickupItemEvent;
 +import org.bukkit.craftbukkit.v1_12_R1.event.CraftEventFactory;
  
@@ -46,10 +47,11 @@
      private int age;
 -    private int pickupDelay;
 +    public int pickupDelay;
++    public boolean canMobPickup = true; // Paper
      private int health;
      private String thrower;
      private String owner;
-@@ -43,6 +62,8 @@
+@@ -43,6 +64,8 @@
       */
      public int lifespan = 6000;
  
@@ -58,7 +60,7 @@
      public EntityItem(World worldIn, double x, double y, double z)
      {
          super(worldIn);
-@@ -60,7 +81,7 @@
+@@ -60,7 +83,7 @@
      {
          this(worldIn, x, y, z);
          this.setItem(stack);
@@ -67,7 +69,7 @@
      }
  
      protected boolean canTriggerWalking()
-@@ -92,12 +113,14 @@
+@@ -92,12 +115,14 @@
          else
          {
              super.onUpdate();
@@ -87,7 +89,7 @@
              this.prevPosX = this.posX;
              this.prevPosY = this.posY;
              this.prevPosZ = this.posZ;
-@@ -156,10 +179,12 @@
+@@ -156,10 +181,12 @@
                  this.motionY *= -0.5D;
              }
  
@@ -100,7 +102,7 @@
  
              this.handleWaterMovement();
  
-@@ -180,6 +205,12 @@
+@@ -180,6 +207,12 @@
  
              if (!this.world.isRemote && this.age >= lifespan)
              {
@@ -113,7 +115,7 @@
                  int hook = net.minecraftforge.event.ForgeEventFactory.onItemExpire(this, item);
                  if (hook < 0) this.setDead();
                  else          this.lifespan += hook;
-@@ -191,9 +222,35 @@
+@@ -191,9 +224,35 @@
          }
      }
  
@@ -150,7 +152,7 @@
          {
              this.combineItems(entityitem);
          }
-@@ -248,11 +305,14 @@
+@@ -248,11 +307,14 @@
                      }
                      else
                      {
@@ -170,7 +172,7 @@
                          return true;
                      }
                  }
-@@ -314,6 +374,11 @@
+@@ -314,6 +376,11 @@
          }
          else
          {
@@ -182,13 +184,28 @@
              this.markVelocityChanged();
              this.health = (int)((float)this.health - amount);
  
-@@ -393,6 +458,35 @@
+@@ -393,6 +460,56 @@
              Item item = itemstack.getItem();
              int i = itemstack.getCount();
  
 +            // CraftBukkit start - fire PlayerPickupItemEvent
 +            int canHold = entityIn.inventory.canHold(itemstack);
 +            int remaining = i - canHold;
++            boolean flyAtPlayer = false; // Paper
++
++            // Paper start
++            if (this.pickupDelay <= 0) {
++                PlayerAttemptPickupItemEvent attemptEvent = new PlayerAttemptPickupItemEvent((org.bukkit.entity.Player) entityIn.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
++                this.world.getServer().getPluginManager().callEvent(attemptEvent);
++                flyAtPlayer = attemptEvent.getFlyAtPlayer();
++                if (attemptEvent.isCancelled()) {
++                    if (flyAtPlayer) {
++                        entityIn.onItemPickup(this, i);
++                    }
++                    return;
++                }
++            }
++            // Paper end
 +
 +            if (this.pickupDelay <= 0 && canHold > 0) {
 +                itemstack.setCount(canHold);
@@ -196,7 +213,13 @@
 +                PlayerPickupItemEvent playerEvent = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityIn.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
 +                playerEvent.setCancelled(!entityIn.canPickUpLoot);
 +                this.world.getServer().getPluginManager().callEvent(playerEvent);
++                flyAtPlayer = playerEvent.getFlyAtPlayer(); // Paper
 +                if (playerEvent.isCancelled()) {
++                    // Paper Start
++                    if (flyAtPlayer) {
++                        entityIn.onItemPickup(this, i);
++                    }
++                    // Paper End
 +                    return;
 +                }
 +
@@ -218,3 +241,15 @@
              int hook = net.minecraftforge.event.ForgeEventFactory.onItemPickup(this, entityIn);
              if (hook < 0) return;
              ItemStack clone = itemstack.copy();
+@@ -401,6 +518,11 @@
+             {
+                 clone.setCount(clone.getCount() - this.getItem().getCount());
+                 net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerItemPickupEvent(entityIn, this, clone);
++                // Paper Start
++                if (flyAtPlayer) {
++                    entityIn.onItemPickup(this, i);
++                }
++                // Paper End
+ 
+                 if (itemstack.isEmpty())
+                 {

@@ -5,6 +5,7 @@ import net.minecraft.entity.passive.EntityHorse;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.craftbukkit.v1_12_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftInventoryAbstractHorse;
+import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftSaddledInventory;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Horse;
@@ -91,6 +92,6 @@ public abstract class CraftAbstractHorse extends CraftAnimals implements Abstrac
 
     @Override
     public AbstractHorseInventory getInventory() {
-        return new CraftInventoryAbstractHorse(getHandle().horseChest);
+        return new CraftSaddledInventory(getHandle().horseChest);
     }
 }

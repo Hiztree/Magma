@@ -197,14 +197,23 @@ public final class CraftItemFactory implements ItemFactory {
         return DEFAULT_LEATHER_COLOR;
     }
 
-    // TODO: 12/07/2020 Magma Comeback
+    // Paper start
     @Override
     public ItemStack ensureServerConversions(ItemStack item) {
-        return null;
+        return CraftItemStack.asCraftMirror(CraftItemStack.asNMSCopy(item));
     }
 
     @Override
     public String getI18NDisplayName(ItemStack item) {
-        return null;
+        net.minecraft.item.ItemStack nms = null;
+        if (item instanceof CraftItemStack) {
+            nms = ((CraftItemStack) item).handle;
+        }
+        if (nms == null) {
+            nms = CraftItemStack.asNMSCopy(item);
+        }
+        return nms != null ? nms.getDisplayName() : null;
     }
+
+    // Paper end
 }

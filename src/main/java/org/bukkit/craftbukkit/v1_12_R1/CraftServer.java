@@ -427,11 +427,6 @@ public final class CraftServer implements Server {
 
     }
 
-    @Override
-    public boolean suggestPlayerNamesWhenNullTabCompletions() {
-        return true;
-    }
-
     public void disablePlugins() {
         pluginManager.disablePlugins();
     }
@@ -1020,7 +1015,7 @@ public final class CraftServer implements Server {
         WorldServer internal = DimensionManager.initDimension(creator, worldSettings);
 
         pluginManager.callEvent(new WorldInitEvent(internal.getWorld()));
-        System.out.println("Preparing start region for level " + (console.worldServerList.size() - 1) + " (Seed: " + internal.getSeed() + ")");
+        logger.info("Preparing start region for level " + (console.worldServerList.size() - 1) + " (Dimension: " + internal.provider.getDimension() + ", Seed: " + internal.getSeed() + ")"); // Cauldron - log dimension
 
         if (internal.getWorld().getKeepSpawnInMemory()) {
             short short1 = internal.paperConfig.keepLoadedRange; // Paper
@@ -1037,7 +1032,7 @@ public final class CraftServer implements Server {
                         int i1 = (short1 * 2 + 1) * (short1 * 2 + 1);
                         int j1 = (j + short1) * (short1 * 2 + 1) + k + 1;
 
-                        System.out.println("Preparing spawn area for " + name + ", " + (j1 * 100 / i1) + "%");
+                        logger.info("Preparing spawn area for " + internal.getWorld().getName() + ", " + (j1 * 100 / i1) + "%");
                         i = l;
                     }
 
@@ -1986,5 +1981,11 @@ public final class CraftServer implements Server {
         commandMap.registerServerAliases();
         return true;
     }
+
+    @Override
+    public boolean suggestPlayerNamesWhenNullTabCompletions() {
+        return com.destroystokyo.paper.PaperConfig.suggestPlayersWhenNullTabCompletions;
+    }
+
     // Paper end
 }

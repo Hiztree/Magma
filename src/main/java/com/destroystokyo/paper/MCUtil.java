@@ -1,6 +1,9 @@
 package com.destroystokyo.paper;
 
+import com.destroystokyo.paper.profile.CraftPlayerProfile;
+import com.destroystokyo.paper.profile.PlayerProfile;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.mojang.authlib.GameProfile;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -227,5 +230,9 @@ public final class MCUtil {
 
     public static World getNMSWorld(@Nonnull org.bukkit.entity.Entity entity) {
         return getNMSWorld(entity.getWorld());
+    }
+
+    public static PlayerProfile toBukkit(GameProfile profile) {
+        return CraftPlayerProfile.asBukkitMirror(profile);
     }
 }

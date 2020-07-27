@@ -125,6 +125,15 @@
  
          if (f > 0.1F)
          {
+@@ -578,7 +600,7 @@
+ 
+         if (!this.world.isRemote && (this.fallDistance > 0.5F || this.isInWater() || this.isRiding()) || this.capabilities.isFlying)
+         {
+-            this.spawnShoulderEntities();
++            if (!this.world.paperConfig.parrotsHangOnBetter) this.spawnShoulderEntities();
+         }
+     }
+ 
 @@ -691,6 +713,7 @@
      @Nullable
      public EntityItem dropItem(boolean dropAll)
@@ -525,9 +534,12 @@
          }
          else
          {
-@@ -2225,10 +2398,16 @@
+@@ -2223,12 +2396,18 @@
+         }
+     }
  
-     protected void spawnShoulderEntities()
+-    protected void spawnShoulderEntities()
++    public void spawnShoulderEntities()
      {
 -        this.spawnShoulderEntity(this.getLeftShoulderEntity());
 -        this.setLeftShoulderEntity(new NBTTagCompound());

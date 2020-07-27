@@ -418,6 +418,18 @@ public class PaperWorldConfig {
         log( "Max Entity Collisions: " + maxCollisionsPerEntity );
     }
 
+    public boolean parrotsHangOnBetter;
+    private void parrotsHangOnBetter() {
+        parrotsHangOnBetter = getBoolean("parrots-are-unaffected-by-player-movement", false);
+        log("Parrots are unaffected by player movement: " + parrotsHangOnBetter);
+    }
+
+    public boolean disableCreeperLingeringEffect;
+    private void setDisableCreeperLingeringEffect() {
+        disableCreeperLingeringEffect = getBoolean("disable-creeper-lingering-effect", false);
+        log("Creeper lingering effect: " + disableCreeperLingeringEffect);
+    }
+
     public boolean armorStandTick = true;
     private void armorStandTick() {
         this.armorStandTick = this.getBoolean("armor-stands-tick", this.armorStandTick);

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import net.minecraft.server.MinecraftServer;
 import org.apache.commons.io.FileUtils;
@@ -12,6 +14,7 @@ import org.magmafoundation.magma.commands.MagmaCommand;
 import org.magmafoundation.magma.commands.TPSCommand;
 import org.magmafoundation.magma.commands.VersionCommand;
 import org.magmafoundation.magma.configuration.value.Value;
+import org.magmafoundation.magma.configuration.value.values.ArrayValue;
 import org.magmafoundation.magma.configuration.value.values.BooleanValue;
 import org.magmafoundation.magma.configuration.value.values.IntValue;
 import org.magmafoundation.magma.configuration.value.values.StringArrayValue;
@@ -40,6 +43,7 @@ public class MagmaConfig extends ConfigBase {
     //=============================WORLD SETTINGS=============================
     public final IntValue expMergeMaxValue = new IntValue(this, "experience-merge-max-value", -1,
         "Instructs the server put a maximum value on experience orbs, preventing them all from merging down into 1 single orb.");
+    public List<String> autoUnloadDimensions = new ArrayList();
 
     //=============================Misc SETTINGS=============================
     public final BooleanValue forgeBukkitPermissionHandlerEnable = new BooleanValue(this, "forge.bukkitPermissionHandler.enable", true, "Let's Bukkit permission plugins handle forge/modded commands");
@@ -123,6 +127,8 @@ public class MagmaConfig extends ConfigBase {
             }
             version = getInt("config-version", 2);
             set("config-version", 2);
+            config.addDefault("forge.autoUnloadDimensions", new String[]{"0", "1", "-1"});
+            this.autoUnloadDimensions = config.getStringList("forge.autoUnloadDimensions");
 
             config.options().header(header.toString());
             config.options().copyDefaults(true);

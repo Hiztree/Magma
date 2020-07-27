@@ -45,6 +45,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Enchantments;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ContainerRepair;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -1604,6 +1605,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         if (container.getBukkitView().getType() != prop.getType()) {
             return false;
         }
+        // Paper start
+        if (prop == Property.REPAIR_COST && container instanceof ContainerRepair) {
+            ((ContainerRepair) container).maximumCost = value;
+        }
+        // Paper end
         getHandle().sendWindowProperty(container, prop.getId(), value);
         return true;
     }

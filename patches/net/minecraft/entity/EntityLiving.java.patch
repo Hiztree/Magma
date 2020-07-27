@@ -160,7 +160,21 @@
  
          if (compound.hasKey("ArmorItems", 9))
          {
-@@ -653,8 +689,14 @@
+@@ -581,6 +617,13 @@
+         {
+             for (EntityItem entityitem : this.world.getEntitiesWithinAABB(EntityItem.class, this.getEntityBoundingBox().grow(1.0D, 0.0D, 1.0D)))
+             {
++
++                // Paper Start
++                if (!entityitem.canMobPickup) {
++                    continue;
++                }
++                // Paper End
++
+                 if (!entityitem.isDead && !entityitem.getItem().isEmpty() && !entityitem.cannotPickup())
+                 {
+                     this.updateEquipmentIfNeeded(entityitem);
+@@ -653,8 +696,14 @@
              }
          }
  
@@ -177,7 +191,7 @@
              double d0;
  
              switch (entityequipmentslot.getSlotType())
-@@ -696,7 +738,7 @@
+@@ -696,7 +745,7 @@
          return true;
      }
  
@@ -186,7 +200,7 @@
      {
          return true;
      }
-@@ -721,26 +763,22 @@
+@@ -721,26 +770,22 @@
          }
          else
          {
@@ -218,7 +232,7 @@
                      this.idleTime = 0;
                  }
              }
-@@ -753,6 +791,18 @@
+@@ -753,6 +798,18 @@
          this.world.profiler.startSection("checkDespawn");
          this.despawnEntity();
          this.world.profiler.endSection();
@@ -237,7 +251,7 @@
          this.world.profiler.startSection("sensing");
          this.senses.clearSensingCache();
          this.world.profiler.endSection();
-@@ -1192,12 +1242,12 @@
+@@ -1192,12 +1249,12 @@
  
      public boolean canPickUpLoot()
      {
@@ -252,7 +266,7 @@
      }
  
      public boolean isNoDespawnRequired()
-@@ -1209,6 +1259,10 @@
+@@ -1209,6 +1266,10 @@
      {
          if (this.getLeashed() && this.getLeashHolder() == player)
          {
@@ -263,7 +277,7 @@
              this.clearLeashed(true, !player.capabilities.isCreativeMode);
              return true;
          }
-@@ -1218,6 +1272,10 @@
+@@ -1218,6 +1279,10 @@
  
              if (itemstack.getItem() == Items.LEAD && this.canBeLeashedTo(player))
              {
@@ -274,7 +288,7 @@
                  this.setLeashHolder(player, true);
                  itemstack.shrink(1);
                  return true;
-@@ -1245,11 +1303,13 @@
+@@ -1245,11 +1310,13 @@
          {
              if (!this.isEntityAlive())
              {
@@ -288,7 +302,7 @@
                  this.clearLeashed(true, true);
              }
          }
-@@ -1348,6 +1408,7 @@
+@@ -1348,6 +1415,7 @@
              }
              else
              {
