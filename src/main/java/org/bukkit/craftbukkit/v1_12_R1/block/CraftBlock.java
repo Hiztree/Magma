@@ -291,6 +291,22 @@ public class CraftBlock implements Block {
     }
 
     public BlockState getState() {
+        // Paper start - allow disabling the use of snapshots
+        return getState(true);
+    }
+
+    public BlockState getState(boolean useSnapshot) {
+        boolean prev = CraftBlockEntityState.DISABLE_SNAPSHOT;
+        CraftBlockEntityState.DISABLE_SNAPSHOT = !useSnapshot;
+        try {
+            return getState0();
+        } finally {
+            CraftBlockEntityState.DISABLE_SNAPSHOT = prev;
+        }
+    }
+
+    public BlockState getState0() {
+        // Paper end
         Material material = getType();
         // Megma start - if null, check for TE that implements IInventory
         if (material == null) {
@@ -388,12 +404,6 @@ public class CraftBlock implements Block {
             }
                 return new CraftBlockEntityState<TileEntity>(this, (Class<TileEntity>) tileEntity.getClass());
         }
-    }
-
-    // TODO: 12/07/2020 Magma Comeback
-    @Override
-    public BlockState getState(boolean useSnapshot) {
-        return null;
     }
 
     public Biome getBiome() {

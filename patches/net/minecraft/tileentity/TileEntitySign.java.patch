@@ -112,6 +112,15 @@
              public BlockPos getPosition()
              {
                  return TileEntitySign.this.pos;
+@@ -187,7 +227,7 @@
+             }
+             public MinecraftServer getServer()
+             {
+-                return playerIn.getServer();
++                return MinecraftServer.getServerInstance(); // Paper - world maybe null
+             }
+         };
+ 
 @@ -201,7 +241,12 @@
  
                  if (clickevent.getAction() == ClickEvent.Action.RUN_COMMAND)

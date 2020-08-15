@@ -90,15 +90,22 @@
      {
      }
  
-@@ -531,4 +568,12 @@
+@@ -531,4 +568,19 @@
          register("shulker_box", TileEntityShulkerBox.class);
          register("bed", TileEntityBed.class);
      }
 +
++    // Paper start
++
 +    @Nullable
 +    public InventoryHolder getOwner() {
++        return getOwner(true);
++    }
++
++    public InventoryHolder getOwner(boolean useSnapshot) {
++        // Paper end
 +        if (world == null) return null;
-+        org.bukkit.block.BlockState state = world.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getState();
++        org.bukkit.block.BlockState state = world.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getState(useSnapshot);
 +        if (state instanceof InventoryHolder) return (InventoryHolder) state;
 +        return null;
 +    }

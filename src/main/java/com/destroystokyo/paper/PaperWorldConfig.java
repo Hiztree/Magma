@@ -436,4 +436,10 @@ public class PaperWorldConfig {
         log("ArmorStand ticking is " + (this.armorStandTick ? "enabled" : "disabled") + " by default");
     }
 
+    public int expMergeMaxValue;
+    private void expMergeMaxValue() {
+        expMergeMaxValue = getInt("experience-merge-max-value", -1);
+        log("Experience Merge Max Value: " + expMergeMaxValue);
+    }
+
 }

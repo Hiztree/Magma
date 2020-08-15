@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.v1_12_R1;
 
+import com.destroystokyo.paper.MCUtil;
 import com.destroystokyo.paper.PaperConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -1159,9 +1160,13 @@ public final class CraftServer implements Server {
         return logger;
     }
 
+    // Paper start - JLine update
+    /*
     public ConsoleReader getReader() {
         return this.console.reader;
     }
+    */
+    // Paper end
 
     @Override
     public PluginCommand getPluginCommand(String name) {
@@ -1729,7 +1734,8 @@ public final class CraftServer implements Server {
             offers = tabCompleteChat(player, message);
         }
 
-        TabCompleteEvent tabEvent = new TabCompleteEvent(player, message, offers);
+        TabCompleteEvent tabEvent = new TabCompleteEvent(player, message, offers, message.startsWith("/") || forceCommand, pos != null ? MCUtil
+            .toLocation(((CraftWorld) player.getWorld()).getHandle(), pos) : null); // Paper
         getPluginManager().callEvent(tabEvent);
 
         return tabEvent.isCancelled() ? Collections.EMPTY_LIST : tabEvent.getCompletions();
