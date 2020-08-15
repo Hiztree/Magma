@@ -1,6 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/network/NetworkManager.java
 +++ ../src-work/minecraft/net/minecraft/network/NetworkManager.java
-@@ -74,15 +74,25 @@
+@@ -74,15 +74,26 @@
          }
      };
      private final EnumPacketDirection direction;
@@ -24,12 +24,13 @@
 +    // Paper start - NetworkClient implementation
 +    public int protocolVersion;
 +    public java.net.InetSocketAddress virtualHost;
++    private static boolean enableExplicitFlush = Boolean.getBoolean("paper.explicit-flush");
 +    // Paper end
 +
      public NetworkManager(EnumPacketDirection packetDirection)
      {
          this.direction = packetDirection;
-@@ -98,6 +108,7 @@
+@@ -98,6 +109,7 @@
          super.channelActive(p_channelActive_1_);
          this.channel = p_channelActive_1_.channel();
          this.socketAddress = this.channel.remoteAddress();
@@ -37,7 +38,7 @@
  
          try
          {
-@@ -173,7 +184,7 @@
+@@ -173,7 +185,7 @@
  
              try
              {
@@ -46,7 +47,7 @@
              }
              finally
              {
-@@ -195,7 +206,7 @@
+@@ -195,7 +207,7 @@
  
              try
              {
@@ -55,7 +56,7 @@
              }
              finally
              {
-@@ -265,7 +276,7 @@
+@@ -265,7 +277,7 @@
              {
                  while (!this.outboundPacketsQueue.isEmpty())
                  {
@@ -64,7 +65,16 @@
                      this.dispatchPacket(networkmanager$inboundhandlertuplepacketlistener.packet, networkmanager$inboundhandlertuplepacketlistener.futureListeners);
                  }
              }
-@@ -298,9 +309,12 @@
+@@ -287,7 +299,7 @@
+ 
+         if (this.channel != null)
+         {
+-            this.channel.flush();
++            if (enableExplicitFlush) this.channel.eventLoop().execute(() -> this.channel.flush()); // Paper - we don't need to explicit flush here, but allow opt in incase issues are found to a better version
+         }
+     }
+ 
+@@ -298,9 +310,12 @@
  
      public void closeChannel(ITextComponent message)
      {
@@ -78,7 +88,7 @@
              this.terminationReason = message;
          }
      }
-@@ -410,7 +424,7 @@
+@@ -410,7 +425,7 @@
              }
              else
              {
@@ -87,7 +97,7 @@
              }
  
              if (this.channel.pipeline().get("compress") instanceof NettyCompressionEncoder)
-@@ -476,4 +490,12 @@
+@@ -476,4 +491,12 @@
                  this.futureListeners = inFutureListeners;
              }
          }

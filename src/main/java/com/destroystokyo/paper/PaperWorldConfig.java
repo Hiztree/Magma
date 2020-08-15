@@ -224,6 +224,11 @@ public class PaperWorldConfig {
         disableChestCatDetection = getBoolean("game-mechanics.disable-chest-cat-detection", false);
     }
 
+    public boolean disablePlayerCrits;
+    private void disablePlayerCrits() {
+        disablePlayerCrits = getBoolean("game-mechanics.disable-player-crits", false);
+    }
+
     public boolean allChunksAreSlimeChunks;
     private void allChunksAreSlimeChunks() {
         allChunksAreSlimeChunks = getBoolean("all-chunks-are-slime-chunks", false);
@@ -474,5 +479,16 @@ public class PaperWorldConfig {
         log("Cooldown Hoppers when Full: " + (cooldownHopperWhenFull ? "enabled" : "disabled"));
         disableHopperMoveEvents = getBoolean("hopper.disable-move-event", disableHopperMoveEvents);
         log("Hopper Move Item Events: " + (disableHopperMoveEvents ? "disabled" : "enabled"));
+    }
+
+    public boolean disableSprintInterruptionOnAttack;
+    private void disableSprintInterruptionOnAttack() {
+        disableSprintInterruptionOnAttack = getBoolean("game-mechanics.disable-sprint-interruption-on-attack", false);
+    }
+
+    public boolean allowPermaChunkLoaders = false;
+    private void allowPermaChunkLoaders() {
+        allowPermaChunkLoaders = getBoolean("game-mechanics.allow-permanent-chunk-loaders", allowPermaChunkLoaders);
+        log("Allow Perma Chunk Loaders: " + (allowPermaChunkLoaders ? "enabled" : "disabled"));
     }
 }

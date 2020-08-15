@@ -68,18 +68,20 @@
      @Nullable
      public Chunk loadChunk(int x, int z)
      {
-@@ -92,6 +124,11 @@
+@@ -92,7 +124,12 @@
      @Nullable
      public Chunk loadChunk(int x, int z, @Nullable Runnable runnable)
      {
+-        Chunk chunk = this.getLoadedChunk(x, z);
 +        return getChunkAt(x, z, runnable, true);
 +    }
 +
 +    public Chunk getChunkAt(int x, int z, Runnable runnable, boolean generate)
 +    {
-         Chunk chunk = this.getLoadedChunk(x, z);
++        Chunk chunk = world.paperConfig.allowPermaChunkLoaders ? getLoadedChunk(x, z) : getChunkIfLoaded(x, z); // Paper - Configurable perma chunk loaders
          if (chunk == null)
          {
+             long pos = ChunkPos.asLong(x, z);
 @@ -106,7 +143,7 @@
                  {
                  this.id2ChunkMap.put(ChunkPos.asLong(x, z), chunk);
@@ -89,7 +91,21 @@
                  }
  
                  loadingChunks.remove(pos);
-@@ -123,6 +160,8 @@
+@@ -116,6 +153,13 @@
+                 net.minecraft.world.chunk.storage.AnvilChunkLoader loader = (net.minecraft.world.chunk.storage.AnvilChunkLoader) this.chunkLoader;
+                 if (runnable == null || !net.minecraftforge.common.ForgeChunkManager.asyncChunkLoading)
+                     chunk = net.minecraftforge.common.chunkio.ChunkIOExecutor.syncChunkLoad(this.world, loader, this, x, z);
++
++                // Paper start - If there was an issue loading the chunk from region, stage1 will fail and stage2 will load it sync
++                // all we need to do is fetch an instance
++                if (chunk == null) {
++                    chunk = getChunkIfLoaded(x, z);
++                }
++                // Paper end
+                 else if (loader.isChunkGeneratedAt(x, z))
+                 {
+                     // We can only use the async queue for already generated chunks
+@@ -123,6 +167,8 @@
                      return null;
                  }
              }
@@ -98,7 +114,7 @@
          }
  
          // If we didn't load the chunk async and have a callback run it now
-@@ -154,7 +193,7 @@
+@@ -154,7 +200,7 @@
  
              this.id2ChunkMap.put(i, chunk);
              chunk.onLoad();
@@ -107,7 +123,7 @@
          }
  
          return chunk;
-@@ -177,7 +216,11 @@
+@@ -177,7 +223,11 @@
          }
          catch (Exception exception)
          {
@@ -120,7 +136,7 @@
              return null;
          }
      }
-@@ -186,34 +229,74 @@
+@@ -186,34 +236,74 @@
      {
          try
          {
@@ -203,7 +219,7 @@
          List<Chunk> list = Lists.newArrayList(this.id2ChunkMap.values());
  
          for (int j = 0; j < list.size(); ++j)
-@@ -227,12 +310,11 @@
+@@ -227,12 +317,11 @@
  
              if (chunk.needsSaving(all))
              {
@@ -218,7 +234,7 @@
                      return false;
                  }
              }
-@@ -246,12 +328,19 @@
+@@ -246,12 +335,19 @@
          this.chunkLoader.flush();
      }
  
@@ -238,7 +254,7 @@
                  for (ChunkPos forced : this.world.getPersistentChunks().keySet())
                  {
                      this.droppedChunksSet.remove(ChunkPos.asLong(forced.x, forced.z));
-@@ -259,31 +348,87 @@
+@@ -259,31 +355,87 @@
  
                  Iterator<Long> iterator = this.droppedChunksSet.iterator();
  
@@ -335,7 +351,7 @@
      public boolean canSave()
      {
          return !this.world.disableLevelSaving;
-@@ -324,4 +469,5 @@
+@@ -324,4 +476,5 @@
      {
          return this.id2ChunkMap.containsKey(ChunkPos.asLong(x, z)) || this.chunkLoader.isChunkGeneratedAt(x, z);
      }

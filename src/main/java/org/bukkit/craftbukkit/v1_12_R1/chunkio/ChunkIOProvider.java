@@ -26,6 +26,11 @@ class ChunkIOProvider implements AsynchronousExecutor.CallBackProvider<QueuedChu
             return null;
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+            // Paper - Mirror vanilla by catching everything (else) rather than immediately crashing the server
+            // stage2 will receive a null chunk and then load it synchronously, where vanilla MC will properly log and recover
+            // stage2 will _not_ however return that instance, only load it
+        } catch (Exception ex) {
+            return null;
         }
     }
 

@@ -32,7 +32,8 @@
 -    private NetHandlerLoginServer.LoginState currentLoginState = NetHandlerLoginServer.LoginState.HELLO;
 +    private LoginState currentLoginState = LoginState.HELLO;
      private int connectionTimer;
-     private GameProfile loginGameProfile;
+-    private GameProfile loginGameProfile;
++    private GameProfile loginGameProfile; private void setGameProfile(GameProfile profile) { loginGameProfile = profile; } private GameProfile getGameProfile() { return loginGameProfile; } // Paper - OBFHELPER
      private final String serverId = "";
      private SecretKey secretKey;
      private EntityPlayerMP player;
@@ -299,12 +300,12 @@
 +            final CraftServer server = NetHandlerLoginServer.this.server.server;
 +
 +            // Paper start
-+            PlayerProfile profile = CraftPlayerProfile.asBukkitMirror(loginGameProfile);
++            PlayerProfile profile = CraftPlayerProfile.asBukkitMirror(getGameProfile());
 +            AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(playerName, address, uniqueId, profile);
 +            server.getPluginManager().callEvent(asyncEvent);
 +            profile = asyncEvent.getPlayerProfile();
 +            profile.complete(true);
-+            loginGameProfile = CraftPlayerProfile.asAuthlibCopy(profile);
++            setGameProfile(CraftPlayerProfile.asAuthlib(profile));
 +            playerName = loginGameProfile.getName();
 +            uniqueId = loginGameProfile.getId();
 +            // Paper end

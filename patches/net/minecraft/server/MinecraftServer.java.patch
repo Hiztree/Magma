@@ -1153,9 +1153,10 @@
 +        if (i - this.nanoTimeSinceStatusRefresh >= 5000000000L) {
              this.nanoTimeSinceStatusRefresh = i;
 -            this.statusResponse.setPlayers(new ServerStatusResponse.Players(this.getMaxPlayers(), this.getCurrentPlayerCount()));
+-            GameProfile[] agameprofile = new GameProfile[Math.min(this.getCurrentPlayerCount(), 12)];
 +            this.statusResponse
 +                .setPlayers(new ServerStatusResponse.Players(this.getMaxPlayers(), this.getCurrentPlayerCount()));
-             GameProfile[] agameprofile = new GameProfile[Math.min(this.getCurrentPlayerCount(), 12)];
++            GameProfile[] agameprofile = new GameProfile[Math.min(this.getCurrentPlayerCount(), org.spigotmc.SpigotConfig.playerSample)]; // Paper
              int j = MathHelper.getInt(this.random, 0, this.getCurrentPlayerCount() - agameprofile.length);
  
 -            for (int k = 0; k < agameprofile.length; ++k)
@@ -1428,7 +1429,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1137,51 @@
+@@ -835,53 +1137,52 @@
          return ret;
      }
  
@@ -1445,6 +1446,7 @@
  
 -    public int getCurrentPlayerCount()
 -    {
++    public int getPlayerCount() { return getCurrentPlayerCount(); } // Paper - OBFHELPER
 +    public int getCurrentPlayerCount() {
          return this.playerList.getCurrentPlayerCount();
      }
@@ -1506,7 +1508,7 @@
                  }
              });
          }
-@@ -889,145 +1189,115 @@
+@@ -889,145 +1190,115 @@
          return report;
      }
  
@@ -1696,7 +1698,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1305,75 @@
+@@ -1035,80 +1306,75 @@
          }
      }
  
@@ -1806,7 +1808,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1382,193 @@
+@@ -1117,228 +1383,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2089,7 +2091,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1577,254 @@
+@@ -1347,316 +1578,254 @@
          return null;
      }
  

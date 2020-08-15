@@ -1,6 +1,7 @@
 package org.bukkit.craftbukkit.v1_12_R1.entity;
 
 import com.destroystokyo.paper.Title;
+import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -61,11 +62,14 @@ import net.minecraft.network.play.server.SPacketMaps;
 import net.minecraft.network.play.server.SPacketParticles;
 import net.minecraft.network.play.server.SPacketPlayerListHeaderFooter;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
+import net.minecraft.network.play.server.SPacketPlayerPosLook;
+import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.network.play.server.SPacketSetPassengers;
 import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.network.play.server.SPacketSpawnPosition;
 import net.minecraft.network.play.server.SPacketTitle;
 import net.minecraft.network.play.server.SPacketUpdateHealth;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ChatType;
@@ -144,6 +148,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     // Paper start
     private org.bukkit.event.player.PlayerResourcePackStatusEvent.Status resourcePackStatus;
     private String resourcePackHash;
+    private static final boolean DISABLE_CHANNEL_LIMIT = System.getProperty("paper.disableChannelLimit") != null; // Paper - add a flag to disable the channel limit
     // Paper end
 
     // Spigot start
@@ -1276,8 +1281,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         hiddenPlayers.put(player.getUniqueId(), hidingPlugins);
 
         // Remove this player from the hidden player's EntityTrackerEntry
-        EntityTracker tracker = ((WorldServer) entity.world).entityTracker;
         EntityPlayerMP other = ((CraftPlayer) player).getHandle();
+        // Paper start
+        unregisterPlayer(other);
+    }
+
+    private void unregisterPlayer(EntityPlayerMP other) {
+        EntityTracker tracker = ((WorldServer) entity.world).entityTracker;
+        // Paper end
         EntityTrackerEntry entry = tracker.trackedEntityHashTable.lookup(other.getEntityId());
         if (entry != null) {
             entry.removeTrackedPlayerSymmetric(getHandle());
@@ -1318,8 +1329,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
         hiddenPlayers.remove(player.getUniqueId());
 
-        EntityTracker tracker = ((WorldServer) entity.world).entityTracker;
+        // Paper start
         EntityPlayerMP other = ((CraftPlayer) player).getHandle();
+        registerPlayer(other);
+    }
+
+    private void registerPlayer(EntityPlayerMP other) {
+        EntityTracker tracker = ((WorldServer) entity.world).entityTracker;
+        // Paper end
 
         getHandle().connection.sendPacket(new SPacketPlayerListItem(SPacketPlayerListItem.Action.ADD_PLAYER, other));
 
@@ -1328,6 +1345,45 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             entry.updatePlayerEntity(getHandle());
         }
     }
+
+    // Paper start
+    private void reregisterPlayer(EntityPlayerMP player) {
+        if (!hiddenPlayers.containsKey(player.getUniqueID())) {
+            unregisterPlayer(player);
+            registerPlayer(player);
+        }
+    }
+
+    public void setPlayerProfile(PlayerProfile profile) {
+        EntityPlayerMP self = getHandle();
+        self.setProfile(CraftPlayerProfile.asAuthlibCopy(profile));
+        List<EntityPlayerMP> players = server.getServer().getPlayerList().playerEntityList;
+        for (EntityPlayerMP player : players) {
+            player.getBukkitEntity().reregisterPlayer(self);
+        }
+        refreshPlayer();
+    }
+
+    public PlayerProfile getPlayerProfile() {
+        return new CraftPlayerProfile(this).clone();
+    }
+
+    private void refreshPlayer() {
+        EntityPlayerMP handle = getHandle();
+        Location loc = getLocation();
+        NetHandlerPlayServer connection = handle.connection;
+        reregisterPlayer(handle);
+        //Respawn the player then update their position and selected slot
+        connection.sendPacket(new SPacketRespawn(handle.dimension, handle.world.getDifficulty(), handle.world.getWorldInfo().getTerrainType(), handle.interactionManager.getGameType()));
+        handle.sendPlayerAbilities();
+        connection.sendPacket(new SPacketPlayerPosLook(loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch(), new HashSet<>(), 0));
+        MinecraftServer.getServerInstance().getPlayerList().syncPlayerInventory(handle);
+        if (this.isOp()) {
+            this.setOp(false);
+            this.setOp(true);
+        }
+    }
+    // Paper end
 
     public void removeDisconnectingPlayer(Player player) {
         hiddenPlayers.remove(player.getUniqueId());
@@ -1499,18 +1555,6 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         return this.resourcePackStatus == org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED;
     }
 
-    // TODO: 12/07/2020 Coamd back magma 
-    @Override
-    public PlayerProfile getPlayerProfile() {
-        return null;
-    }
-
-    @Override
-    public void setPlayerProfile(PlayerProfile profile) {
-
-    }
-    // TODO: 12/07/2020 end
-
     public void setResourcePackStatus(org.bukkit.event.player.PlayerResourcePackStatusEvent.Status status) {
         this.resourcePackStatus = status;
     }
@@ -1537,7 +1581,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void addChannel(String channel) {
-        com.google.common.base.Preconditions.checkState( channels.size() < 128, "Too many channels registered" ); // Spigot
+        com.google.common.base.Preconditions.checkState( DISABLE_CHANNEL_LIMIT || channels.size() < 128, "Too many channels registered" ); // Spigot // Paper - flag to disable channel limit
         if (channels.add(channel)) {
             server.getPluginManager().callEvent(new PlayerRegisterChannelEvent(this, channel));
         }
