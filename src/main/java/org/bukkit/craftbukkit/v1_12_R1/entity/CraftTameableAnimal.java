@@ -19,6 +19,10 @@ public class CraftTameableAnimal extends CraftAnimals implements Tameable, Creat
     }
 
     public UUID getOwnerUniqueId() {
+        return getOwnerUUID();
+    }
+
+    public UUID getOwnerUUID() {
         try {
             return getHandle().getOwnerId();
         } catch (IllegalArgumentException ex) {

@@ -442,4 +442,37 @@ public class PaperWorldConfig {
         log("Experience Merge Max Value: " + expMergeMaxValue);
     }
 
+    public int maxChunkSendsPerTick = 81;
+    private void maxChunkSendsPerTick() {
+        maxChunkSendsPerTick = getInt("max-chunk-sends-per-tick", maxChunkSendsPerTick);
+        if (maxChunkSendsPerTick <= 0) {
+            maxChunkSendsPerTick = 81;
+        }
+        log("Max Chunk Sends Per Tick: " + maxChunkSendsPerTick);
+    }
+
+    public int maxChunkGensPerTick = 10;
+    private void maxChunkGensPerTick() {
+        maxChunkGensPerTick = getInt("max-chunk-gens-per-tick", maxChunkGensPerTick);
+        if (maxChunkGensPerTick <= 0) {
+            maxChunkGensPerTick = Integer.MAX_VALUE;
+            log("Max Chunk Gens Per Tick: Unlimited (NOT RECOMMENDED)");
+        } else {
+            log("Max Chunk Gens Per Tick: " + maxChunkGensPerTick);
+        }
+    }
+
+    public double squidMaxSpawnHeight;
+    private void squidMaxSpawnHeight() {
+        squidMaxSpawnHeight = getDouble("squid-spawn-height.maximum", 0.0D);
+    }
+
+    public boolean cooldownHopperWhenFull = true;
+    public boolean disableHopperMoveEvents = false;
+    private void hopperOptimizations() {
+        cooldownHopperWhenFull = getBoolean("hopper.cooldown-when-full", cooldownHopperWhenFull);
+        log("Cooldown Hoppers when Full: " + (cooldownHopperWhenFull ? "enabled" : "disabled"));
+        disableHopperMoveEvents = getBoolean("hopper.disable-move-event", disableHopperMoveEvents);
+        log("Hopper Move Item Events: " + (disableHopperMoveEvents ? "disabled" : "enabled"));
+    }
 }

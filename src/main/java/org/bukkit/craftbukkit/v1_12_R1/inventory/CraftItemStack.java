@@ -305,6 +305,8 @@ public final class CraftItemStack extends ItemStack {
                 return new CraftMetaSpawnEgg(item.getTagCompound());
             case KNOWLEDGE_BOOK:
                 return new CraftMetaKnowledgeBook(item.getTagCompound());
+            case ARMOR_STAND:
+                return new CraftMetaArmorStand(item.getTagCompound()); // Paper
             case FURNACE:
             case CHEST:
             case TRAPPED_CHEST:
