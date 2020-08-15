@@ -12,7 +12,7 @@
  import com.google.common.util.concurrent.Futures;
  import com.google.common.util.concurrent.ListenableFuture;
  import com.google.common.util.concurrent.ListenableFutureTask;
-@@ -15,52 +18,70 @@
+@@ -15,52 +18,71 @@
  import io.netty.handler.codec.base64.Base64;
  import java.awt.GraphicsEnvironment;
  import java.awt.image.BufferedImage;
@@ -76,6 +76,7 @@
  import net.minecraft.server.management.PlayerList;
  import net.minecraft.server.management.PlayerProfileCache;
 +import net.minecraft.tileentity.BannerPattern;
++import net.minecraft.tileentity.TileEntityHopper;
  import net.minecraft.util.IProgressUpdate;
  import net.minecraft.util.IThreadListener;
  import net.minecraft.util.ITickable;
@@ -84,7 +85,7 @@
  import net.minecraft.util.Util;
  import net.minecraft.util.datafix.DataFixer;
  import net.minecraft.util.datafix.DataFixesManager;
-@@ -73,41 +94,74 @@
+@@ -73,41 +95,74 @@
  import net.minecraft.world.MinecraftException;
  import net.minecraft.world.ServerWorldEventHandler;
  import net.minecraft.world.World;
@@ -167,7 +168,7 @@
      private boolean serverStopped;
      private int tickCounter;
      protected final Proxy serverProxy;
-@@ -128,7 +182,6 @@
+@@ -128,7 +183,6 @@
      private KeyPair serverKeyPair;
      private String serverOwner;
      private String folderName;
@@ -175,7 +176,7 @@
      private String worldName;
      private boolean isDemo;
      private boolean enableBonusChest;
-@@ -144,178 +197,321 @@
+@@ -144,178 +198,321 @@
      private final GameProfileRepository profileRepo;
      private final PlayerProfileCache profileCache;
      private long nanoTimeSinceStatusRefresh;
@@ -594,7 +595,7 @@
          int i = 16;
          int j = 4;
          int k = 192;
-@@ -323,45 +519,46 @@
+@@ -323,45 +520,46 @@
          int i1 = 0;
          this.setUserMessage("menu.generatingTerrain");
          int j1 = 0;
@@ -667,7 +668,7 @@
          }
      }
  
-@@ -379,73 +576,80 @@
+@@ -379,73 +577,80 @@
  
      public abstract boolean shouldBroadcastConsoleToOps();
  
@@ -781,7 +782,7 @@
              {
                  if (worldserver1 != null)
                  {
-@@ -453,159 +657,222 @@
+@@ -453,159 +658,222 @@
                      worldserver1.flush();
                  }
              }
@@ -1077,7 +1078,7 @@
                  BufferedImage bufferedimage = ImageIO.read(file1);
                  Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide");
                  Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high");
-@@ -613,52 +880,44 @@
+@@ -613,52 +881,44 @@
                  ByteBuf bytebuf1 = Base64.encode(bytebuf);
                  response.setFavicon("data:image/png;base64," + bytebuf1.toString(StandardCharsets.UTF_8));
                  bytebuf1.release(); // Forge: fix MC-122085
@@ -1143,7 +1144,7 @@
              this.startProfiling = false;
              this.profiler.profilingEnabled = true;
              this.profiler.clearProfiling();
-@@ -667,16 +926,15 @@
+@@ -667,16 +927,15 @@
          this.profiler.startSection("root");
          this.updateTimeLightAndEntities();
  
@@ -1165,7 +1166,7 @@
              }
  
              Collections.shuffle(Arrays.asList(agameprofile));
-@@ -684,143 +942,185 @@
+@@ -684,143 +943,186 @@
              this.statusResponse.invalidateJson();
          }
  
@@ -1282,6 +1283,7 @@
 -            if (id == 0 || this.getAllowNether())
 +            WorldServer worldserver = worldServerList.get(x);
 +            int id = worldserver.dimension;
++            TileEntityHopper.skipHopperEvents = worldserver.paperConfig.disableHopperMoveEvents || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0;
 +
 +            this.profiler.func_194340_a(() ->
              {
@@ -1426,7 +1428,7 @@
          LOGGER.warn(msg);
      }
  
-@@ -835,53 +1135,51 @@
+@@ -835,53 +1137,51 @@
          return ret;
      }
  
@@ -1504,7 +1506,7 @@
                  }
              });
          }
-@@ -889,145 +1187,115 @@
+@@ -889,145 +1189,115 @@
          return report;
      }
  
@@ -1694,7 +1696,7 @@
                      worldserver1.getWorldInfo().setDifficulty(difficulty);
                      worldserver1.setAllowedSpawnTypes(this.allowSpawnMonsters(), this.canSpawnAnimals);
                  }
-@@ -1035,80 +1303,75 @@
+@@ -1035,80 +1305,75 @@
          }
      }
  
@@ -1804,7 +1806,7 @@
                      ++l;
                  }
              }
-@@ -1117,228 +1380,193 @@
+@@ -1117,228 +1382,193 @@
          playerSnooper.addClientStat("worlds", Integer.valueOf(l));
      }
  
@@ -2087,7 +2089,7 @@
                      return entity;
                  }
              }
-@@ -1347,316 +1575,254 @@
+@@ -1347,316 +1577,254 @@
          return null;
      }
  

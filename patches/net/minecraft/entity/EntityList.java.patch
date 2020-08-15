@@ -1,6 +1,14 @@
 --- ../src-base/minecraft/net/minecraft/entity/EntityList.java
 +++ ../src-work/minecraft/net/minecraft/entity/EntityList.java
-@@ -107,6 +107,10 @@
+@@ -104,9 +104,18 @@
+ 
+ public class EntityList
+ {
++    // Paper start
++    public static Map<Class<? extends Entity>, ResourceLocation> clsToKeyMap = new java.util.HashMap<>();
++    public static Map<Class<? extends Entity>, org.bukkit.entity.EntityType> clsToTypeMap = new java.util.HashMap<>();
++    // Paper end
++
      public static final ResourceLocation LIGHTNING_BOLT = new ResourceLocation("lightning_bolt");
      private static final ResourceLocation PLAYER = new ResourceLocation("player");
      private static final Logger LOGGER = LogManager.getLogger();
@@ -10,4 +18,13 @@
 +    public static final List<String> OLD_NAMES = Lists.newArrayList();
      public static final Map<ResourceLocation, EntityList.EntityEggInfo> ENTITY_EGGS = Maps.<ResourceLocation, EntityList.EntityEggInfo>newLinkedHashMap();
      private static final Set<ResourceLocation> EXTRA_NAMES = Sets.newHashSet();
+ 
+@@ -422,6 +431,8 @@
+         {
+             ResourceLocation resourcelocation = new ResourceLocation(name);
+             net.minecraftforge.registries.GameData.registerEntity(id, resourcelocation, clazz, oldName);
++            clsToKeyMap.put(clazz, resourcelocation); // Paper
++            clsToTypeMap.put(clazz, org.bukkit.entity.EntityType.fromName(name)); // Paper
+         }
+     }
  

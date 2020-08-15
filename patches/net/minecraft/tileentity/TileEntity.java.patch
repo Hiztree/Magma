@@ -8,7 +8,7 @@
  import javax.annotation.Nullable;
  import net.minecraft.block.Block;
  import net.minecraft.block.BlockJukebox;
-@@ -16,26 +18,56 @@
+@@ -16,26 +18,58 @@
  import net.minecraft.util.registry.RegistryNamespaced;
  import net.minecraft.util.text.ITextComponent;
  import net.minecraft.world.World;
@@ -34,6 +34,8 @@
 +    public Timing tickTimer = MinecraftTimings.getTileEntityTimings(this); // Paper
 +    public boolean isLoadingStructure = false; // Paper
  
++    static boolean IGNORE_TILE_UPDATES = false; // Paper
++
      public static void register(String id, Class <? extends TileEntity > clazz)
      {
          REGISTRY.putObject(new ResourceLocation(id), clazz);
@@ -67,7 +69,15 @@
      @Nullable
      public static ResourceLocation getKey(Class <? extends TileEntity > clazz)
      {
-@@ -243,7 +275,12 @@
+@@ -154,6 +188,7 @@
+     {
+         if (this.world != null)
+         {
++            if (IGNORE_TILE_UPDATES) return; // Paper
+             IBlockState iblockstate = this.world.getBlockState(this.pos);
+             this.blockMetadata = iblockstate.getBlock().getMetaFromState(iblockstate);
+             this.world.markChunkDirty(this.pos, this);
+@@ -243,7 +278,12 @@
  
          if (this.world != null)
          {
@@ -81,7 +91,7 @@
              reportCategory.addDetail("Actual block type", new ICrashReportDetail<String>()
              {
                  public String call() throws Exception
-@@ -315,7 +352,7 @@
+@@ -315,7 +355,7 @@
       * @param net The NetworkManager the packet originated from
       * @param pkt The data packet
       */
@@ -90,7 +100,7 @@
      {
      }
  
-@@ -531,4 +568,19 @@
+@@ -531,4 +571,19 @@
          register("shulker_box", TileEntityShulkerBox.class);
          register("bed", TileEntityBed.class);
      }
