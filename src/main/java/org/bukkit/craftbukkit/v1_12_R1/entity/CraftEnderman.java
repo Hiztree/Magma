@@ -14,10 +14,9 @@ public class CraftEnderman extends CraftMonster implements Enderman {
         super(server, entity);
     }
 
-    // TODO: 12/07/2020 Magma Comeback
     @Override
     public boolean teleportRandomly() {
-        return false;
+        return getHandle().teleportRandomly(); // Paper
     }
 
     public MaterialData getCarriedMaterial() {

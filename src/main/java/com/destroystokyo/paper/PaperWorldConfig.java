@@ -491,4 +491,10 @@ public class PaperWorldConfig {
         allowPermaChunkLoaders = getBoolean("game-mechanics.allow-permanent-chunk-loaders", allowPermaChunkLoaders);
         log("Allow Perma Chunk Loaders: " + (allowPermaChunkLoaders ? "enabled" : "disabled"));
     }
+
+    public boolean disableEnderpearlExploit = true;
+    private void disableEnderpearlExploit() {
+        disableEnderpearlExploit = getBoolean("game-mechanics.disable-unloaded-chunk-enderpearl-exploit", disableEnderpearlExploit);
+        log("Disable Unloaded Chunk Enderpearl Exploit: " + (disableEnderpearlExploit ? "enabled" : "disabled"));
+    }
 }
