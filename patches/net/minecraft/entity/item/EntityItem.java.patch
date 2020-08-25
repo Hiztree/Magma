@@ -115,7 +115,7 @@
                  int hook = net.minecraftforge.event.ForgeEventFactory.onItemExpire(this, item);
                  if (hook < 0) this.setDead();
                  else          this.lifespan += hook;
-@@ -191,9 +224,35 @@
+@@ -191,9 +224,39 @@
          }
      }
  
@@ -145,6 +145,10 @@
      private void searchForOtherItemsNearby()
      {
 -        for (EntityItem entityitem : this.world.getEntitiesWithinAABB(EntityItem.class, this.getEntityBoundingBox().grow(0.5D, 0.0D, 0.5D)))
++        // Paper start - avoid item merge if stack size above max stack size
++        ItemStack stack = getItem();
++        if (stack.getCount() >= stack.getMaxStackSize()) return;
++        // Paper end
 +        // Spigot start
 +        double radius = world.spigotConfig.itemMerge;
 +        for (EntityItem entityitem : this.world.getEntitiesWithinAABB(EntityItem.class, this.getEntityBoundingBox().grow(radius, radius, radius)))
@@ -152,7 +156,7 @@
          {
              this.combineItems(entityitem);
          }
-@@ -248,11 +307,14 @@
+@@ -248,11 +311,14 @@
                      }
                      else
                      {
@@ -172,7 +176,7 @@
                          return true;
                      }
                  }
-@@ -314,6 +376,11 @@
+@@ -314,6 +380,11 @@
          }
          else
          {
@@ -184,7 +188,7 @@
              this.markVelocityChanged();
              this.health = (int)((float)this.health - amount);
  
-@@ -393,6 +460,56 @@
+@@ -393,6 +464,56 @@
              Item item = itemstack.getItem();
              int i = itemstack.getCount();
  
@@ -241,7 +245,7 @@
              int hook = net.minecraftforge.event.ForgeEventFactory.onItemPickup(this, entityIn);
              if (hook < 0) return;
              ItemStack clone = itemstack.copy();
-@@ -401,6 +518,11 @@
+@@ -401,6 +522,11 @@
              {
                  clone.setCount(clone.getCount() - this.getItem().getCount());
                  net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerItemPickupEvent(entityIn, this, clone);

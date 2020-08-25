@@ -37,6 +37,15 @@
          try
          {
              NBTTagCompound nbttagcompound = player.writeToNBT(new NBTTagCompound());
+@@ -196,7 +203,7 @@
+         }
+         catch (Exception var5)
+         {
+-            LOGGER.warn("Failed to save player data for {}", (Object)player.getName());
++            LOGGER.error("Failed to save player data for {}", (Object)player.getName(), var5); // Paper
+         }
+     }
+ 
 @@ -208,11 +215,28 @@
          try
          {

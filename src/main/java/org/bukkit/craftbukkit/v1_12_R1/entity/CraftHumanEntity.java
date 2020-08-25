@@ -438,14 +438,15 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public void closeInventory() {
-        getHandle().closeScreen();
+        // Paper start
+        getHandle().closeInventory(Reason.PLUGIN);
     }
 
-    // // TODO: 12/07/2020 Comebakc magma
     @Override
     public void closeInventory(Reason reason) {
-        
+        getHandle().closeInventory(reason);
     }
+    // Paper end
 
     public boolean isBlocking() {
         return getHandle().isActiveItemStackBlocking();

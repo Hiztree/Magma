@@ -374,7 +374,7 @@
          playerIn.addStat(StatList.LEAVE_GAME);
 +
 +        // CraftBukkit start - Quitting must be before we do final save of data, in case plugins need to modify it
-+        CraftEventFactory.handleInventoryCloseEvent(playerIn);
++        CraftEventFactory.handleInventoryCloseEvent(playerIn, org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper
 +        if(playerIn.connection != null) {
 +            // Magma CraftServer Changed to Bukkit
 +            PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(cserver.getPlayer(playerIn), "\u00A7e" + playerIn.getName() + " left the game");

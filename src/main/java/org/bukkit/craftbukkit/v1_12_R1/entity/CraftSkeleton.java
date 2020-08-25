@@ -1,12 +1,13 @@
 package org.bukkit.craftbukkit.v1_12_R1.entity;
 
+import com.destroystokyo.paper.entity.CraftRangedEntity;
 import net.minecraft.entity.monster.AbstractSkeleton;
 import org.bukkit.craftbukkit.v1_12_R1.CraftServer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Skeleton;
 
-public class CraftSkeleton extends CraftMonster implements Skeleton {
+public class CraftSkeleton extends CraftMonster implements Skeleton, CraftRangedEntity<AbstractSkeleton> { // Paper
 
     public CraftSkeleton(CraftServer server, AbstractSkeleton entity) {
         super(server, entity);
@@ -36,14 +37,4 @@ public class CraftSkeleton extends CraftMonster implements Skeleton {
         throw new UnsupportedOperationException("Not supported.");
     }
 
-    // TODO: 12/07/2020 Magma Comeback
-    @Override
-    public void rangedAttack(LivingEntity target, float charge) {
-
-    }
-
-    @Override
-    public void setChargingAttack(boolean raiseHands) {
-
-    }
 }

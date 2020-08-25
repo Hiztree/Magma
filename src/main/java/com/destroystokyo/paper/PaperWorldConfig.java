@@ -389,11 +389,6 @@ public class PaperWorldConfig {
         removeCorruptTEs = getBoolean("remove-corrupt-tile-entities", false);
     }
 
-    public int shieldBlockingDelay = 5;
-    private void shieldBlockingDelay() {
-        shieldBlockingDelay = getInt("game-mechanics.shield-blocking-delay", 5);
-    }
-
     public boolean filterNBTFromSpawnEgg = true;
     private void fitlerNBTFromSpawnEgg() {
         filterNBTFromSpawnEgg = getBoolean("filter-nbt-data-from-spawn-eggs-and-related", true);
@@ -497,4 +492,26 @@ public class PaperWorldConfig {
         disableEnderpearlExploit = getBoolean("game-mechanics.disable-unloaded-chunk-enderpearl-exploit", disableEnderpearlExploit);
         log("Disable Unloaded Chunk Enderpearl Exploit: " + (disableEnderpearlExploit ? "enabled" : "disabled"));
     }
+
+    public int shieldBlockingDelay = 5;
+    private void shieldBlockingDelay() {
+        shieldBlockingDelay = getInt("game-mechanics.shield-blocking-delay", 5);
+    }
+
+    public boolean scanForLegacyEnderDragon = true;
+    private void scanForLegacyEnderDragon() {
+        scanForLegacyEnderDragon = getBoolean("game-mechanics.scan-for-legacy-ender-dragon", true);
+    }
+
+    public int bedSearchRadius = 1;
+    private void bedSearchRadius() {
+        bedSearchRadius = getInt("bed-search-radius", 1);
+        if (bedSearchRadius < 1) {
+            bedSearchRadius = 1;
+        }
+        if (bedSearchRadius > 1) {
+            log("Bed Search Radius: " + bedSearchRadius);
+        }
+    }
+
 }

@@ -894,12 +894,12 @@ public class CraftWorld implements World {
     public boolean createExplosion(double x, double y, double z, float power, boolean setFire, boolean breakBlocks) {
         return !world.newExplosion(null, x, y, z, power, setFire, breakBlocks).wasCanceled;
     }
-    // Paper end
 
     // Paper start
     public boolean createExplosion(Entity source, Location loc, float power, boolean setFire, boolean breakBlocks) {
         return !world.newExplosion(source != null ? ((CraftEntity) source).getHandle() : null, loc.getX(), loc.getY(), loc.getZ(), power, setFire, breakBlocks).wasCanceled;
     }
+    // Paper end
 
     public boolean createExplosion(Location loc, float power) {
         return createExplosion(loc, power, false);
@@ -1110,6 +1110,7 @@ public class CraftWorld implements World {
         net.minecraft.entity.Entity entity = world.getEntityFromUuid(uuid);
         return entity == null ? null : entity.getBukkitEntity();
     }
+    // Paper end
 
     public void save() {
         // Spigot start
@@ -1278,6 +1279,10 @@ public class CraftWorld implements World {
         if (Boat.class.isAssignableFrom(clazz)) {
             entity = new EntityBoat(world, x, y, z);
             entity.setLocationAndAngles(x, y, z, yaw, pitch);
+            // Paper start
+        } else if (org.bukkit.entity.Item.class.isAssignableFrom(clazz)) {
+            entity = new EntityItem(world, x, y, z, new net.minecraft.item.ItemStack(net.minecraft.item.Item.getItemFromBlock(Blocks.DIRT)));
+            // Paper end
         } else if (FallingBlock.class.isAssignableFrom(clazz)) {
             entity = new EntityFallingBlock(world, x, y, z, world.getBlockState(new BlockPos(x, y, z)));
         } else if (Projectile.class.isAssignableFrom(clazz)) {

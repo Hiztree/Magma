@@ -202,7 +202,15 @@
                      this.shrink(1);
  
                      if (entityIn instanceof EntityPlayer)
-@@ -592,9 +662,22 @@
+@@ -533,6 +603,7 @@
+         this.getItem().onCreated(this, worldIn, playerIn);
+     }
+ 
++    public int getItemUseMaxDuration() { return getMaxItemUseDuration(); } // Paper - OBFHELPER
+     public int getMaxItemUseDuration()
+     {
+         return this.getItem().getMaxItemUseDuration(this);
+@@ -592,9 +663,22 @@
          return this.stackTagCompound != null ? this.stackTagCompound.getTagList("ench", 10) : new NBTTagList();
      }
  
@@ -225,7 +233,7 @@
      }
  
      public String getDisplayName()
-@@ -931,6 +1014,7 @@
+@@ -931,6 +1015,7 @@
          nbttagcompound.setShort("id", (short)Enchantment.getEnchantmentID(ench));
          nbttagcompound.setShort("lvl", (short)((byte)level));
          nbttaglist.appendTag(nbttagcompound);
@@ -233,7 +241,7 @@
      }
  
      public boolean isItemEnchanted()
-@@ -983,6 +1067,14 @@
+@@ -983,6 +1068,14 @@
  
      public void setRepairCost(int cost)
      {
@@ -248,7 +256,7 @@
          if (!this.hasTagCompound())
          {
              this.stackTagCompound = new NBTTagCompound();
-@@ -1043,6 +1135,14 @@
+@@ -1043,6 +1136,14 @@
          nbttaglist.appendTag(nbttagcompound);
      }
  
@@ -263,7 +271,7 @@
      public ITextComponent getTextComponent()
      {
          TextComponentString textcomponentstring = new TextComponentString(this.getDisplayName());
-@@ -1280,4 +1380,16 @@
+@@ -1280,4 +1381,16 @@
      {
          return this.isEmpty() || this.getItem().doesSneakBypassUse(this, world, pos, player);
      }

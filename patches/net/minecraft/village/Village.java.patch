@@ -18,3 +18,17 @@
                  ++this.numIronGolems;
              }
          }
+@@ -382,7 +382,12 @@
+ 
+     private boolean isWoodDoor(BlockPos pos)
+     {
+-        IBlockState iblockstate = this.world.getBlockState(pos);
++        // Paper start
++        IBlockState iblockstate = this.world.getTypeIfLoaded(pos);
++        if (iblockstate == null) {
++            return false;
++        }
++        // Paper end
+         Block block = iblockstate.getBlock();
+ 
+         if (block instanceof BlockDoor)

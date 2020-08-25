@@ -318,7 +318,7 @@
  
          for (ExtendedBlockStorage extendedblockstorage : aextendedblockstorage)
          {
-@@ -348,6 +406,11 @@
+@@ -348,13 +406,30 @@
  
          compound.setTag("Sections", nbttaglist);
          compound.setByteArray("Biomes", chunkIn.getBiomeArray());
@@ -330,7 +330,38 @@
          chunkIn.setHasEntities(false);
          NBTTagList nbttaglist1 = new NBTTagList();
  
-@@ -472,12 +535,14 @@
++        List<Entity> toUpdate = new java.util.ArrayList<>(); // Paper
+         for (int i = 0; i < chunkIn.getEntityLists().length; ++i)
+         {
+             for (Entity entity : chunkIn.getEntityLists()[i])
+             {
++                // Paper start
++                if ((int)Math.floor(entity.getX()) >> 4 != chunkIn.x || (int)Math.floor(entity.getZ()) >> 4 != chunkIn.z) {
++                    LogManager.getLogger().warn(entity + " is not in this chunk, skipping save. This a bug fix to a vanilla bug. Do not report this to PaperMC please.");
++                    toUpdate.add(entity);
++                    continue;
++                }
++                if (entity.isDead) {
++                    continue;
++                }
++                // Paper end
++
+                 NBTTagCompound nbttagcompound2 = new NBTTagCompound();
+ 
+                 try
+@@ -372,6 +447,11 @@
+                 }
+             }
+         }
++        // Paper start - move entities to the correct chunk
++        for (Entity entity : toUpdate) {
++            worldIn.updateEntityWithOptionalForce(entity, false);
++        }
++        // Paper end
+ 
+         compound.setTag("Entities", nbttaglist1);
+         NBTTagList nbttaglist2 = new NBTTagList();
+@@ -472,12 +552,14 @@
              chunk.getCapabilities().deserializeNBT(compound.getCompoundTag("ForgeCaps"));
          }
  
@@ -346,7 +377,7 @@
          NBTTagList nbttaglist1 = compound.getTagList("Entities", 10);
  
          for (int j1 = 0; j1 < nbttaglist1.tagCount(); ++j1)
-@@ -521,6 +586,7 @@
+@@ -521,6 +603,7 @@
                  worldIn.scheduleBlockUpdate(new BlockPos(nbttagcompound3.getInteger("x"), nbttagcompound3.getInteger("y"), nbttagcompound3.getInteger("z")), block, nbttagcompound3.getInteger("t"), nbttagcompound3.getInteger("p"));
              }
          }
@@ -354,7 +385,7 @@
      }
  
      @Nullable
-@@ -609,8 +675,11 @@
+@@ -609,8 +692,11 @@
  
      public static void spawnEntity(Entity entityIn, World worldIn)
      {
@@ -368,7 +399,7 @@
              for (Entity entity : entityIn.getPassengers())
              {
                  spawnEntity(entity, worldIn);
-@@ -656,4 +725,15 @@
+@@ -656,4 +742,15 @@
      {
          return this.chunksToSave.size();
      }

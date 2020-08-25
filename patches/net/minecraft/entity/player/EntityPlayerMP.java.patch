@@ -242,7 +242,7 @@
          this.interactionManager.updateBlockRemoving();
          --this.respawnInvulnerabilityTicks;
  
-@@ -321,7 +427,12 @@
+@@ -321,11 +427,16 @@
              --this.hurtResistantTime;
          }
  
@@ -256,6 +256,11 @@
  
          if (!this.world.isRemote && this.openContainer != null && !this.openContainer.canInteractWith(this))
          {
+-            this.closeScreen();
++            this.closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.CANT_USE); // Paper
+             this.openContainer = this.inventoryContainer;
+         }
+ 
 @@ -398,7 +509,7 @@
  
              if (this.getHealth() != this.lastHealth || this.lastFoodLevel != this.foodStats.getFoodLevel() || this.foodStats.getSaturationLevel() == 0.0F != this.wasHungry)
@@ -400,7 +405,7 @@
          }
  
 -        for (ScoreObjective scoreobjective : this.world.getScoreboard().getObjectivesFromCriteria(IScoreCriteria.DEATH_COUNT))
-+        this.closeScreen();
++        this.closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DEATH); // Paper
 +        this.setSpectatingEntity(this); // Remove spectated target
 +
 +        // CraftBukkit - Get our scores instead
@@ -674,6 +679,15 @@
          if (chestInventory instanceof ILootContainer && ((ILootContainer)chestInventory).getLootTable() != null && this.isSpectator())
          {
              this.sendStatusMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)), true);
+@@ -876,7 +1152,7 @@
+         {
+             if (this.openContainer != this.inventoryContainer)
+             {
+-                this.closeScreen();
++                this.closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW); // Paper
+             }
+ 
+             if (chestInventory instanceof ILockableContainer)
 @@ -887,8 +1163,10 @@
                  {
                      this.connection.sendPacket(new SPacketChat(new TextComponentTranslation("container.isLocked", new Object[] {chestInventory.getDisplayName()}), ChatType.GAME_INFO));
@@ -719,7 +733,7 @@
          this.openContainer.windowId = this.currentWindowId;
          this.openContainer.addListener(this);
          net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
-@@ -933,6 +1220,13 @@
+@@ -933,14 +1220,22 @@
  
      public void openGuiHorseInventory(AbstractHorse horse, IInventory inventoryIn)
      {
@@ -732,8 +746,9 @@
 +        // CraftBukkit end
          if (this.openContainer != this.inventoryContainer)
          {
-             this.closeScreen();
-@@ -940,7 +1234,8 @@
+-            this.closeScreen();
++            this.closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW); // Paper
+         }
  
          this.getNextWindowId();
          this.connection.sendPacket(new SPacketOpenWindow(this.currentWindowId, "EntityHorse", inventoryIn.getDisplayName(), inventoryIn.getSizeInventory(), horse.getEntityId()));
@@ -756,15 +771,21 @@
      }
  
      public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue)
-@@ -1005,6 +1306,7 @@
+@@ -1005,6 +1306,13 @@
  
      public void closeScreen()
      {
-+        CraftEventFactory.handleInventoryCloseEvent(this); // CraftBukkit
++        // Paper start
++        closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason.UNKNOWN);
++    }
++
++    public void closeInventory(org.bukkit.event.inventory.InventoryCloseEvent.Reason reason) {
++        CraftEventFactory.handleInventoryCloseEvent(this, reason); // CraftBukkit
++        // Paper end
          this.connection.sendPacket(new SPacketCloseWindow(this.openContainer.windowId));
          this.closeContainer();
      }
-@@ -1080,6 +1382,10 @@
+@@ -1080,6 +1388,10 @@
  
          for (ResourceLocation resourcelocation : p_193102_1_)
          {
@@ -775,7 +796,7 @@
              list.add(CraftingManager.getRecipe(resourcelocation));
          }
  
-@@ -1110,8 +1416,16 @@
+@@ -1110,8 +1422,16 @@
      public void setPlayerHealthUpdated()
      {
          this.lastHealth = -1.0E8F;
@@ -792,7 +813,7 @@
      public void sendStatusMessage(ITextComponent chatComponent, boolean actionBar)
      {
          this.connection.sendPacket(new SPacketChat(chatComponent, actionBar ? ChatType.GAME_INFO : ChatType.CHAT));
-@@ -1156,8 +1470,12 @@
+@@ -1156,8 +1476,12 @@
          this.lastExperience = -1;
          this.lastHealth = -1.0F;
          this.lastFoodLevel = -1;
@@ -807,7 +828,7 @@
          this.seenCredits = that.seenCredits;
          this.enteredNetherPosition = that.enteredNetherPosition;
          this.setLeftShoulderEntity(that.getLeftShoulderEntity());
-@@ -1246,6 +1564,18 @@
+@@ -1246,6 +1570,18 @@
  
      public void setGameType(GameType gameType)
      {
@@ -826,7 +847,7 @@
          this.interactionManager.setGameType(gameType);
          this.connection.sendPacket(new SPacketChangeGameState(3, (float)gameType.getID()));
  
-@@ -1280,34 +1610,32 @@
+@@ -1280,34 +1616,32 @@
  
      public boolean canUseCommand(int permLevel, String commandName)
      {
@@ -882,7 +903,7 @@
      }
  
      public String getPlayerIP()
-@@ -1320,14 +1648,37 @@
+@@ -1320,14 +1654,37 @@
  
      public void handleClientSettings(CPacketClientSettings packetIn)
      {
@@ -921,7 +942,7 @@
      {
          return this.chatVisibility;
      }
-@@ -1402,7 +1753,7 @@
+@@ -1402,7 +1759,7 @@
          if (entity != this.spectatingEntity)
          {
              this.connection.sendPacket(new SPacketCamera(this.spectatingEntity));
@@ -930,7 +951,7 @@
          }
      }
  
-@@ -1434,7 +1785,8 @@
+@@ -1434,7 +1791,8 @@
      @Nullable
      public ITextComponent getTabListDisplayName()
      {
@@ -940,7 +961,7 @@
      }
  
      public void swingArm(EnumHand hand)
-@@ -1455,13 +1807,20 @@
+@@ -1455,13 +1813,20 @@
  
      public void setElytraFlying()
      {
@@ -964,7 +985,7 @@
      }
  
      public PlayerAdvancements getAdvancements()
-@@ -1474,4 +1833,145 @@
+@@ -1474,4 +1839,145 @@
      {
          return this.enteredNetherPosition;
      }

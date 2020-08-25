@@ -64,6 +64,10 @@ public class PaperConfig {
         readConfig(PaperConfig.class, null);
     }
 
+    protected static void logError(String s) {
+        Bukkit.getLogger().severe(s);
+    }
+
     protected static void log(String s) {
         if (verbose) {
             Bukkit.getLogger().info(s);
@@ -287,6 +291,14 @@ public class PaperConfig {
         if(!savePlayerData) {
             Bukkit.getLogger().log(Level.WARNING, "Player Data Saving is currently disabled. Any changes to your players data, " +
                 "such as inventories, experience points, advancements and the like will not be saved when they log out.");
+        }
+    }
+
+    public static boolean useAlternativeLuckFormula = false;
+    private static void useAlternativeLuckFormula() {
+        useAlternativeLuckFormula = getBoolean("settings.use-alternative-luck-formula", false);
+        if (useAlternativeLuckFormula) {
+            Bukkit.getLogger().log(Level.INFO, "Using Aikar's Alternative Luck Formula to apply Luck attribute to all loot pool calculations. See https://luckformula.emc.gs");
         }
     }
 

@@ -268,7 +268,7 @@ public class CraftEventFactory {
     /**
      * EntityShootBowEvent
      */
-    public static EntityShootBowEvent callEntityShootBowEvent(EntityLivingBase who, ItemStack itemstack, EntityArrow entityArrow, float force) {
+    public static EntityShootBowEvent callEntityShootBowEvent(EntityLivingBase who, /*bow*/ ItemStack itemstack, /*arrow*/ ItemStack arrowItem, EntityArrow entityArrow, float force) { // Paper
         LivingEntity shooter = (LivingEntity) who.getBukkitEntity();
         CraftItemStack itemInHand = CraftItemStack.asCraftMirror(itemstack);
         Arrow arrow = (Arrow) entityArrow.getBukkitEntity();
@@ -277,7 +277,7 @@ public class CraftEventFactory {
             itemInHand = null;
         }
 
-        EntityShootBowEvent event = new EntityShootBowEvent(shooter, itemInHand, arrow, force);
+        EntityShootBowEvent event = new EntityShootBowEvent(shooter, itemInHand, CraftItemStack.asCraftMirror(arrowItem), arrow, force); // Paper
         Bukkit.getPluginManager().callEvent(event);
 
         return event;
@@ -951,7 +951,7 @@ public class CraftEventFactory {
             hitBlock = entity.getBukkitEntity().getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
         }
 
-        ProjectileHitEvent event = new ProjectileHitEvent((Projectile) entity.getBukkitEntity(), position.entityHit == null ? null : position.entityHit.getBukkitEntity(), hitBlock);
+        ProjectileHitEvent event = new ProjectileHitEvent((Projectile) entity.getBukkitEntity(), position.entityHit == null ? null : position.entityHit.getBukkitEntity(), hitBlock, position.sideHit == null ? null : CraftBlock.notchToBlockFace(position.sideHit)); // Paper - add BlockFace parameter
         entity.world.getServer().getPluginManager().callEvent(event);
         return event;
     }
@@ -1042,11 +1042,21 @@ public class CraftEventFactory {
         return event;
     }
 
+    // Paper start
+    /**
+     * Incase plugins hooked into this or Spigot adds a new inventory close event. Prefer to pass a reason
+     * @param human
+     */
+    @Deprecated
     public static void handleInventoryCloseEvent(EntityPlayer human) {
+        handleInventoryCloseEvent(human, org.bukkit.event.inventory.InventoryCloseEvent.Reason.UNKNOWN);
+    }
+    public static void handleInventoryCloseEvent(EntityPlayer human, org.bukkit.event.inventory.InventoryCloseEvent.Reason reason) {
+        InventoryCloseEvent event = new InventoryCloseEvent(human.openContainer.getBukkitView(), reason);
+        // Paper end
         if (AsyncCatcher.catchInv()) {
             return;
         }
-        InventoryCloseEvent event = new InventoryCloseEvent(human.openContainer.getBukkitView());
         if (human.openContainer.getBukkitView() != null) {
         human.world.getServer().getPluginManager().callEvent(event);
         }
